@@ -21,6 +21,7 @@ class FactoryGame {
         
         // Building system
         this.selectedBuilding = null;
+        this.selectedBuildingRotation = 0; // 0, 1, 2, 3 for 0°, 90°, 180°, 270°
         this.buildings = new Map(); // grid position -> building data
         this.deleteMode = false;
         this.buildingTypes = {
@@ -80,6 +81,7 @@ class FactoryGame {
         // Initial menu state
         this.updateMenuState();
         this.updateModeDisplay();
+        this.updateBuildingAvailability();
         
         // Start game loop
         this.gameLoop();
@@ -145,9 +147,6 @@ class FactoryGame {
             e.preventDefault();
             this.handleRightClick(e);
         });
-        
-        // Update building availability
-        this.updateBuildingAvailability();
     }
     
     resizeCanvas() {
@@ -272,6 +271,7 @@ class FactoryGame {
     selectBuilding(buildingType) {
         if (this.buildingTypes[buildingType] && this.canAfford(buildingType)) {
             this.selectedBuilding = buildingType;
+            this.selectedBuildingRotation = 0; // Reset rotation when selecting new building
             this.deleteMode = false;
             this.updateBuildingSelection();
             this.updateModeDisplay();
@@ -301,7 +301,7 @@ class FactoryGame {
             type: this.selectedBuilding,
             x: gridX,
             y: gridY,
-            rotation: 0
+            rotation: this.selectedBuildingRotation
         });
         
         // Deduct cost
@@ -339,12 +339,18 @@ class FactoryGame {
         this.ctx.lineWidth = 2;
         this.ctx.strokeRect(x + 2, y + 2, this.gridSize - 4, this.gridSize - 4);
         
-        // Draw building icon
+        // Draw building icon with rotation
+        this.ctx.save();
+        this.ctx.translate(x + this.gridSize/2, y + this.gridSize/2);
+        this.ctx.rotate(building.rotation * Math.PI / 2);
+        
         this.ctx.font = '20px Arial';
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
         this.ctx.fillStyle = '#fff';
-        this.ctx.fillText(buildingType.icon, x + this.gridSize/2, y + this.gridSize/2);
+        this.ctx.fillText(buildingType.icon, 0, 0);
+        
+        this.ctx.restore();
     }
     
     drawBuildingPreview() {
@@ -376,25 +382,35 @@ class FactoryGame {
         this.ctx.strokeRect(x + 2, y + 2, this.gridSize - 4, this.gridSize - 4);
         this.ctx.setLineDash([]);
         
-        // Draw building icon
+        // Draw building icon with rotation
+        this.ctx.save();
+        this.ctx.translate(x + this.gridSize/2, y + this.gridSize/2);
+        this.ctx.rotate(this.selectedBuildingRotation * Math.PI / 2);
+        
         this.ctx.font = '20px Arial';
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
         this.ctx.fillStyle = '#fff';
-        this.ctx.fillText(buildingType.icon, x + this.gridSize/2, y + this.gridSize/2);
+        this.ctx.fillText(buildingType.icon, 0, 0);
+        
+        this.ctx.restore();
     }
     
     drawInputOutputArrows(gridX, gridY, buildingType) {
         const building = this.buildingTypes[buildingType];
         const pixelPos = this.getPixelPosition(gridX, gridY);
         
+        // Rotate input/output directions based on building rotation
+        const rotatedInputs = this.rotateDirections(building.inputs, this.selectedBuildingRotation);
+        const rotatedOutputs = this.rotateDirections(building.outputs, this.selectedBuildingRotation);
+        
         // Draw input arrows
-        building.inputs.forEach(direction => {
+        rotatedInputs.forEach(direction => {
             this.drawArrow(pixelPos.x, pixelPos.y, direction, '#4CAF50', true);
         });
         
         // Draw output arrows
-        building.outputs.forEach(direction => {
+        rotatedOutputs.forEach(direction => {
             this.drawArrow(pixelPos.x, pixelPos.y, direction, '#f44336', false);
         });
     }
@@ -452,6 +468,35 @@ class FactoryGame {
         return this.mousePos;
     }
     
+    rotateSelectedBuilding() {
+        if (this.selectedBuilding) {
+            this.selectedBuildingRotation = (this.selectedBuildingRotation + 1) % 4;
+            this.draw();
+        }
+    }
+    
+    rotateDirections(directions, rotation) {
+        const directionMap = {
+            'up': 0,
+            'right': 1,
+            'down': 2,
+            'left': 3
+        };
+        
+        const reverseMap = {
+            0: 'up',
+            1: 'right',
+            2: 'down',
+            3: 'left'
+        };
+        
+        return directions.map(direction => {
+            const currentDirection = directionMap[direction];
+            const newDirection = (currentDirection + rotation) % 4;
+            return reverseMap[newDirection];
+        });
+    }
+    
     updateBuildingSelection() {
         // Update visual selection in menu
         document.querySelectorAll('.building-item').forEach(item => {
@@ -464,6 +509,7 @@ class FactoryGame {
     
     updateResourceDisplay() {
         document.getElementById('ironCount').textContent = this.resources.iron;
+        this.updateBuildingAvailability();
     }
     
     updateBuildingAvailability() {
@@ -480,6 +526,7 @@ class FactoryGame {
     handleKeyPress(e) {
         if (e.key === 'Escape') {
             this.selectedBuilding = null;
+            this.selectedBuildingRotation = 0;
             this.deleteMode = false;
             this.updateBuildingSelection();
             this.updateModeDisplay();
@@ -487,6 +534,8 @@ class FactoryGame {
             this.draw();
         } else if (e.key === 'Delete' || e.key === 'Backspace') {
             this.toggleDeleteMode();
+        } else if (e.key === 'r' || e.key === 'R') {
+            this.rotateSelectedBuilding();
         } else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
             this.camera.x -= this.gridSize * 2;
             this.draw();
@@ -603,8 +652,9 @@ class FactoryGame {
         
         const timeSinceLastProduction = (Date.now() - building.lastProduction) / 1000;
         if (timeSinceLastProduction >= 1 / buildingType.productionRate) {
-            // Try to output iron
-            const outputPos = this.getOutputPosition(building, buildingType.outputs[0]);
+            // Get rotated output direction
+            const rotatedOutputs = this.rotateDirections(buildingType.outputs, building.rotation);
+            const outputPos = this.getOutputPosition(building, rotatedOutputs[0]);
             if (outputPos && !this.items.has(`${outputPos.x},${outputPos.y}`)) {
                 // Create iron item
                 this.items.set(`${outputPos.x},${outputPos.y}`, {
@@ -627,8 +677,9 @@ class FactoryGame {
             item.progress += buildingType.speed * deltaTime;
             
             if (item.progress >= 1) {
-                // Move to next position
-                const nextPos = this.getOutputPosition(building, buildingType.outputs[0]);
+                // Get rotated output direction
+                const rotatedOutputs = this.rotateDirections(buildingType.outputs, building.rotation);
+                const nextPos = this.getOutputPosition(building, rotatedOutputs[0]);
                 if (nextPos) {
                     this.items.delete(key);
                     this.items.set(`${nextPos.x},${nextPos.y}`, {
