@@ -16,7 +16,7 @@ class FactoryGame {
         
         // Game state
         this.resources = {
-            iron: 5
+            iron: 8
         };
         
         // Building system
