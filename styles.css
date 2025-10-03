@@ -188,6 +188,41 @@ body {
     color: #bbb;
 }
 
+.mode-indicator {
+    margin-top: 20px;
+}
+
+.mode-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background-color: #4a4a4a;
+    border-radius: 5px;
+    margin-bottom: 8px;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+}
+
+.mode-item.active {
+    border-color: #4CAF50;
+    background-color: #3a5a3a;
+}
+
+.mode-item.delete-active {
+    border-color: #f44336;
+    background-color: #5a3a3a;
+}
+
+.mode-icon {
+    font-size: 16px;
+}
+
+.mode-name {
+    font-weight: bold;
+    color: #fff;
+}
+
 .menu-toggle {
     position: absolute;
     top: 50%;
