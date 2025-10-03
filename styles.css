@@ -1,0 +1,129 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #2a2a2a;
+    overflow: hidden;
+}
+
+.game-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+}
+
+#gameCanvas {
+    background-color: #4a7c59;
+    border: none;
+    cursor: crosshair;
+    flex: 1;
+}
+
+.side-menu {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 300px;
+    height: 100vh;
+    background-color: #3a3a3a;
+    border-left: 2px solid #555;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease-in-out;
+    z-index: 100;
+}
+
+.side-menu.closed {
+    transform: translateX(100%);
+}
+
+.menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background-color: #4a4a4a;
+    border-bottom: 1px solid #555;
+}
+
+.menu-header h2 {
+    color: #fff;
+    font-size: 18px;
+    font-weight: normal;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    transition: background-color 0.2s;
+}
+
+.close-btn:hover {
+    background-color: #555;
+}
+
+.menu-content {
+    padding: 20px;
+    color: #ccc;
+    height: calc(100vh - 80px);
+    overflow-y: auto;
+}
+
+.menu-toggle {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 80px;
+    background-color: #3a3a3a;
+    border: 1px solid #555;
+    border-right: none;
+    border-radius: 5px 0 0 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    z-index: 101;
+}
+
+.menu-toggle:hover {
+    background-color: #4a4a4a;
+}
+
+.menu-toggle .arrow {
+    color: #fff;
+    font-size: 16px;
+    transition: transform 0.3s ease-in-out;
+}
+
+.menu-toggle.rotated .arrow {
+    transform: rotate(180deg);
+}
+
+.menu-toggle.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Grid styling will be handled by JavaScript */
+.grid-line {
+    stroke: #3a5a3a;
+    stroke-width: 1;
+}
+
