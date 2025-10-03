@@ -14,7 +14,47 @@
                 <button class="close-btn" id="closeBtn">&times;</button>
             </div>
             <div class="menu-content">
-                <p>Menu content will go here...</p>
+                <div class="resource-counter">
+                    <h3>Resources</h3>
+                    <div class="resource-item">
+                        <span class="resource-icon">⚡</span>
+                        <span class="resource-name">Iron:</span>
+                        <span class="resource-amount" id="ironCount">5</span>
+                    </div>
+                </div>
+                
+                <div class="building-menu">
+                    <h3>Buildings</h3>
+                    <div class="building-item" data-building="miner">
+                        <div class="building-icon">⛏️</div>
+                        <div class="building-info">
+                            <div class="building-name">Miner</div>
+                            <div class="building-cost">Cost: 5 Iron</div>
+                        </div>
+                    </div>
+                    <div class="building-item" data-building="conveyor">
+                        <div class="building-icon">➡️</div>
+                        <div class="building-info">
+                            <div class="building-name">Conveyor Belt</div>
+                            <div class="building-cost">Cost: 1 Iron</div>
+                        </div>
+                    </div>
+                    <div class="building-item" data-building="submitter">
+                        <div class="building-icon">📦</div>
+                        <div class="building-info">
+                            <div class="building-name">Submitter</div>
+                            <div class="building-cost">Cost: 2 Iron</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <h3>Controls</h3>
+                    <p>• Click building to select</p>
+                    <p>• Click grid to place</p>
+                    <p>• R to rotate</p>
+                    <p>• ESC to cancel</p>
+                </div>
             </div>
         </div>
         
