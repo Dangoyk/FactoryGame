@@ -31,7 +31,9 @@ class FactoryGame {
                 inputs: [],
                 outputs: ['right'],
                 productionRate: 1, // iron per second
-                productionType: 'iron'
+                productionType: 'iron',
+                name: 'Iron Miner',
+                description: 'Extracts iron from the ground. Produces 1 iron per second. Outputs to the right.'
             },
             conveyor: { 
                 cost: 1, 
@@ -39,14 +41,18 @@ class FactoryGame {
                 color: '#666',
                 inputs: ['left'],
                 outputs: ['right'],
-                speed: 1 // items per second
+                speed: 1, // items per second
+                name: 'Conveyor Belt',
+                description: 'Transports items from left to right at 1 item per second. Essential for automation.'
             },
             submitter: { 
                 cost: 2, 
                 icon: '📦', 
                 color: '#4CAF50',
                 inputs: ['left', 'up', 'down'],
-                outputs: []
+                outputs: [],
+                name: 'Resource Submitter',
+                description: 'Collects items from multiple directions and converts them back to resources. Accepts inputs from left, up, and down.'
             }
         };
         
@@ -54,6 +60,14 @@ class FactoryGame {
         this.lastUpdate = Date.now();
         this.items = new Map(); // For items on conveyors
         this.mousePos = { x: 0, y: 0 };
+        
+        // Camera system
+        this.camera = { x: 0, y: 0 };
+        this.spawnPoint = { x: 0, y: 0 };
+        
+        // UI elements
+        this.tooltip = null;
+        this.buildingDetails = null;
         
         this.init();
     }
@@ -105,11 +119,31 @@ class FactoryGame {
             item.addEventListener('click', (e) => {
                 this.selectBuilding(e.currentTarget.dataset.building);
             });
+            
+            // Hover descriptions
+            item.addEventListener('mouseenter', (e) => {
+                this.showBuildingTooltip(e.currentTarget);
+            });
+            
+            item.addEventListener('mouseleave', () => {
+                this.hideTooltip();
+            });
+        });
+        
+        // Return to spawn button
+        document.getElementById('returnToSpawn').addEventListener('click', () => {
+            this.returnToSpawn();
         });
         
         // Keyboard controls
         document.addEventListener('keydown', (e) => {
             this.handleKeyPress(e);
+        });
+        
+        // Canvas right-click for building details
+        this.canvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            this.handleRightClick(e);
         });
         
         // Update building availability
@@ -146,19 +180,27 @@ class FactoryGame {
         this.ctx.strokeStyle = this.gridColor;
         this.ctx.lineWidth = 1;
         
+        // Calculate visible grid bounds
+        const startX = Math.floor(this.camera.x / this.gridSize) * this.gridSize;
+        const startY = Math.floor(this.camera.y / this.gridSize) * this.gridSize;
+        const endX = this.camera.x + this.canvas.width;
+        const endY = this.camera.y + this.canvas.height;
+        
         // Draw vertical lines
-        for (let x = 0; x <= this.canvas.width; x += this.gridSize) {
+        for (let x = startX; x <= endX; x += this.gridSize) {
+            const screenX = x - this.camera.x;
             this.ctx.beginPath();
-            this.ctx.moveTo(x, 0);
-            this.ctx.lineTo(x, this.canvas.height);
+            this.ctx.moveTo(screenX, 0);
+            this.ctx.lineTo(screenX, this.canvas.height);
             this.ctx.stroke();
         }
         
         // Draw horizontal lines
-        for (let y = 0; y <= this.canvas.height; y += this.gridSize) {
+        for (let y = startY; y <= endY; y += this.gridSize) {
+            const screenY = y - this.camera.y;
             this.ctx.beginPath();
-            this.ctx.moveTo(0, y);
-            this.ctx.lineTo(this.canvas.width, y);
+            this.ctx.moveTo(0, screenY);
+            this.ctx.lineTo(this.canvas.width, screenY);
             this.ctx.stroke();
         }
     }
@@ -189,9 +231,13 @@ class FactoryGame {
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
         
+        // Convert to world coordinates (accounting for camera)
+        const worldX = x + this.camera.x;
+        const worldY = y + this.camera.y;
+        
         // Convert to grid coordinates
-        const gridX = Math.floor(x / this.gridSize);
-        const gridY = Math.floor(y / this.gridSize);
+        const gridX = Math.floor(worldX / this.gridSize);
+        const gridY = Math.floor(worldY / this.gridSize);
         
         if (this.deleteMode) {
             this.deleteBuilding(gridX, gridY);
@@ -199,6 +245,27 @@ class FactoryGame {
             this.placeBuilding(gridX, gridY);
         } else {
             console.log(`Clicked at grid position: (${gridX}, ${gridY})`);
+        }
+    }
+    
+    handleRightClick(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        // Convert to world coordinates (accounting for camera)
+        const worldX = x + this.camera.x;
+        const worldY = y + this.camera.y;
+        
+        // Convert to grid coordinates
+        const gridX = Math.floor(worldX / this.gridSize);
+        const gridY = Math.floor(worldY / this.gridSize);
+        
+        const key = `${gridX},${gridY}`;
+        const building = this.buildings.get(key);
+        
+        if (building) {
+            this.showBuildingDetails(building, e.clientX, e.clientY);
         }
     }
     
@@ -249,7 +316,14 @@ class FactoryGame {
     drawBuildings() {
         this.buildings.forEach((building, key) => {
             const pixelPos = this.getPixelPosition(building.x, building.y);
-            this.drawBuilding(building, pixelPos.x, pixelPos.y);
+            const screenX = pixelPos.x - this.camera.x;
+            const screenY = pixelPos.y - this.camera.y;
+            
+            // Only draw if building is visible on screen
+            if (screenX > -this.gridSize && screenX < this.canvas.width + this.gridSize &&
+                screenY > -this.gridSize && screenY < this.canvas.height + this.gridSize) {
+                this.drawBuilding(building, screenX, screenY);
+            }
         });
     }
     
@@ -340,22 +414,22 @@ class FactoryGame {
             case 'up':
                 arrowX = centerX;
                 arrowY = centerY - this.gridSize/2 - arrowSize;
-                rotation = Math.PI;
+                rotation = Math.PI; // Points up
                 break;
             case 'down':
                 arrowX = centerX;
                 arrowY = centerY + this.gridSize/2 + arrowSize;
-                rotation = 0;
+                rotation = 0; // Points down
                 break;
             case 'left':
                 arrowX = centerX - this.gridSize/2 - arrowSize;
                 arrowY = centerY;
-                rotation = Math.PI/2;
+                rotation = -Math.PI/2; // Points left
                 break;
             case 'right':
                 arrowX = centerX + this.gridSize/2 + arrowSize;
                 arrowY = centerY;
-                rotation = -Math.PI/2;
+                rotation = Math.PI/2; // Points right
                 break;
         }
         
@@ -411,8 +485,20 @@ class FactoryGame {
             this.updateModeDisplay();
             this.canvas.style.cursor = 'crosshair';
             this.draw();
-        } else if (e.key === 'd' || e.key === 'D') {
+        } else if (e.key === 'Delete' || e.key === 'Backspace') {
             this.toggleDeleteMode();
+        } else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+            this.camera.x -= this.gridSize * 2;
+            this.draw();
+        } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+            this.camera.x += this.gridSize * 2;
+            this.draw();
+        } else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+            this.camera.y -= this.gridSize * 2;
+            this.draw();
+        } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+            this.camera.y += this.gridSize * 2;
+            this.draw();
         }
     }
     
@@ -601,7 +687,14 @@ class FactoryGame {
     drawItems() {
         this.items.forEach((item, key) => {
             const pixelPos = this.getPixelPosition(item.x, item.y);
-            this.drawItem(item, pixelPos.x, pixelPos.y);
+            const screenX = pixelPos.x - this.camera.x;
+            const screenY = pixelPos.y - this.camera.y;
+            
+            // Only draw if item is visible on screen
+            if (screenX > -this.gridSize && screenX < this.canvas.width + this.gridSize &&
+                screenY > -this.gridSize && screenY < this.canvas.height + this.gridSize) {
+                this.drawItem(item, screenX, screenY);
+            }
         });
     }
     
@@ -616,6 +709,132 @@ class FactoryGame {
         this.ctx.strokeStyle = '#333';
         this.ctx.lineWidth = 1;
         this.ctx.stroke();
+    }
+    
+    // Camera controls
+    returnToSpawn() {
+        this.camera.x = this.spawnPoint.x;
+        this.camera.y = this.spawnPoint.y;
+        this.draw();
+    }
+    
+    // Tooltip system
+    showBuildingTooltip(element) {
+        const buildingType = element.dataset.building;
+        const building = this.buildingTypes[buildingType];
+        
+        if (!this.tooltip) {
+            this.tooltip = document.createElement('div');
+            this.tooltip.className = 'building-tooltip';
+            document.body.appendChild(this.tooltip);
+        }
+        
+        this.tooltip.innerHTML = `
+            <strong>${building.name}</strong><br>
+            ${building.description}<br>
+            <em>Cost: ${building.cost} Iron</em>
+        `;
+        
+        this.tooltip.style.display = 'block';
+    }
+    
+    hideTooltip() {
+        if (this.tooltip) {
+            this.tooltip.style.display = 'none';
+        }
+    }
+    
+    // Building details system
+    showBuildingDetails(building, x, y) {
+        // Remove existing details
+        if (this.buildingDetails) {
+            this.buildingDetails.remove();
+        }
+        
+        const buildingType = this.buildingTypes[building.type];
+        const key = `${building.x},${building.y}`;
+        const item = this.items.get(key);
+        
+        // Determine building status
+        let status = 'stopped';
+        let statusText = 'Not working';
+        let requirements = [];
+        
+        switch (building.type) {
+            case 'miner':
+                if (!item) {
+                    status = 'working';
+                    statusText = 'Producing iron';
+                } else {
+                    status = 'stopped';
+                    statusText = 'Output blocked';
+                    requirements = ['Clear output path'];
+                }
+                break;
+            case 'conveyor':
+                if (item) {
+                    status = 'working';
+                    statusText = 'Transporting items';
+                } else {
+                    status = 'stopped';
+                    statusText = 'No items to transport';
+                    requirements = ['Connect to item source'];
+                }
+                break;
+            case 'submitter':
+                if (item) {
+                    status = 'working';
+                    statusText = 'Collecting items';
+                } else {
+                    status = 'stopped';
+                    statusText = 'No items to collect';
+                    requirements = ['Connect conveyor belts'];
+                }
+                break;
+        }
+        
+        this.buildingDetails = document.createElement('div');
+        this.buildingDetails.className = 'building-details';
+        this.buildingDetails.innerHTML = `
+            <button class="close-btn">&times;</button>
+            <h3>${buildingType.name}</h3>
+            <div class="status ${status}">
+                <strong>Status:</strong> ${statusText}
+            </div>
+            <div><strong>Position:</strong> (${building.x}, ${building.y})</div>
+            <div><strong>Type:</strong> ${building.type}</div>
+            ${requirements.length > 0 ? `
+                <div><strong>Requirements:</strong></div>
+                <ul>
+                    ${requirements.map(req => `<li>${req}</li>`).join('')}
+                </ul>
+            ` : ''}
+        `;
+        
+        // Position the details panel
+        this.buildingDetails.style.left = Math.min(x, window.innerWidth - 320) + 'px';
+        this.buildingDetails.style.top = Math.min(y, window.innerHeight - 200) + 'px';
+        
+        document.body.appendChild(this.buildingDetails);
+        
+        // Close button functionality
+        this.buildingDetails.querySelector('.close-btn').addEventListener('click', () => {
+            this.buildingDetails.remove();
+            this.buildingDetails = null;
+        });
+        
+        // Close on outside click
+        setTimeout(() => {
+            document.addEventListener('click', this.closeBuildingDetails.bind(this));
+        }, 100);
+    }
+    
+    closeBuildingDetails(e) {
+        if (this.buildingDetails && !this.buildingDetails.contains(e.target)) {
+            this.buildingDetails.remove();
+            this.buildingDetails = null;
+            document.removeEventListener('click', this.closeBuildingDetails);
+        }
     }
 }
 

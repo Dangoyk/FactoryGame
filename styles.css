@@ -223,6 +223,89 @@ body {
     color: #fff;
 }
 
+.camera-controls {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 50;
+}
+
+.camera-btn {
+    background-color: #4a4a4a;
+    color: #fff;
+    border: 2px solid #666;
+    border-radius: 5px;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.camera-btn:hover {
+    background-color: #555;
+    border-color: #777;
+}
+
+.building-tooltip {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.9);
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 1000;
+    max-width: 200px;
+    border: 1px solid #555;
+}
+
+.building-details {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.95);
+    color: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 14px;
+    z-index: 1000;
+    border: 2px solid #4CAF50;
+    min-width: 250px;
+    max-width: 300px;
+}
+
+.building-details h3 {
+    margin: 0 0 10px 0;
+    color: #4CAF50;
+    font-size: 16px;
+}
+
+.building-details .status {
+    margin: 5px 0;
+    padding: 5px;
+    border-radius: 3px;
+}
+
+.building-details .status.working {
+    background-color: rgba(76, 175, 80, 0.2);
+    border-left: 3px solid #4CAF50;
+}
+
+.building-details .status.stopped {
+    background-color: rgba(244, 67, 54, 0.2);
+    border-left: 3px solid #f44336;
+}
+
+.building-details .close-btn {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+}
+
 .menu-toggle {
     position: absolute;
     top: 50%;
