@@ -1172,7 +1172,7 @@ class FactoryGame {
         if (basicBuildings.includes(buildingType)) return true;
         
         // Check research requirements for advanced buildings
-        for (let level = 1; level <= 5; level++) {
+        for (let level = 1; level <= 8; level++) {
             const requirements = this.researchRequirements[level];
             if (requirements && requirements.unlocks.includes(buildingType)) {
                 return this.researchLevel >= level;
@@ -2805,7 +2805,8 @@ class FactoryGame {
         // Update power display
         const powerDisplay = document.getElementById('debugPowerDisplay');
         if (powerDisplay) {
-            powerDisplay.textContent = `${this.powerGrid.totalProduction}/${this.powerGrid.totalConsumption} (${Math.round(this.powerGrid.efficiency * 100)}%)`;
+            const efficiency = this.powerGrid.totalConsumption > 0 ? this.powerGrid.efficiency : 1.0;
+            powerDisplay.textContent = `${this.powerGrid.totalProduction}/${this.powerGrid.totalConsumption} (${Math.round(efficiency * 100)}%)`;
         }
         
         // Update research display
@@ -2933,6 +2934,11 @@ class FactoryGame {
             Object.keys(this.recipes).forEach(item => {
                 this.discoveredItems.add(item);
             });
+            
+            // Unlock all research levels
+            this.researchLevel = 8;
+            this.researchProgress = 0;
+            
             this.updateResourceDisplay();
             this.updateDebugDisplay();
         });
@@ -2952,12 +2958,16 @@ class FactoryGame {
                 circuit: 0,
                 motor: 0,
                 computer: 0,
-                robot: 0
+                robot: 0,
+                power: 0,
+                coal: 5,
+                uranium: 0,
+                gold: 0
             };
             
             this.researchLevel = 0;
             this.researchProgress = 0;
-            this.discoveredItems = new Set(['iron']);
+            this.discoveredItems = new Set(['iron', 'coal', 'gold']);
             this.buildings.clear();
             this.items.clear();
             this.storage.clear();
