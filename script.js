@@ -1100,12 +1100,11 @@ class FactoryGame {
         document.getElementById('motorCount').textContent = this.resources.motor;
         document.getElementById('computerCount').textContent = this.resources.computer;
         document.getElementById('robotCount').textContent = this.resources.robot;
-        document.getElementById('powerCount').textContent = this.resources.power;
         document.getElementById('coalCount').textContent = this.resources.coal;
         document.getElementById('uraniumCount').textContent = this.resources.uranium;
         document.getElementById('goldCount').textContent = this.resources.gold;
         
-        // Update power display
+        // Update power display (now in resource bar)
         document.getElementById('powerDisplay').textContent = 
             `${this.powerGrid.totalProduction}/${this.powerGrid.totalConsumption}`;
         
