@@ -1013,3 +1013,58 @@ body {
 .help-section strong {
     color: #FFD700;
 }
+
+/* Debug Modal Specific Styles */
+.debug-section {
+    margin-bottom: 25px;
+    padding: 15px;
+    background-color: #333;
+    border-radius: 8px;
+    border-left: 4px solid #FF6B35;
+}
+
+.debug-section h3 {
+    color: #FF6B35;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+}
+
+.debug-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.debug-btn {
+    background-color: #FF6B35;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+.debug-btn:hover {
+    background-color: #E55A2B;
+}
+
+.debug-info {
+    background-color: #2a2a2a;
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+.debug-resource {
+    display: inline-block;
+    background-color: #444;
+    padding: 2px 6px;
+    margin: 2px;
+    border-radius: 3px;
+    font-size: 12px;
+}

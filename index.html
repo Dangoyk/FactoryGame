@@ -332,10 +332,13 @@
                     <h3>🏗️ Building Costs</h3>
                     <p><strong>Resource Requirements:</strong></p>
                     <ul>
-                        <li>🏗️ <strong>Basic Buildings:</strong> Cost only iron or copper</li>
-                        <li>⚙️ <strong>Advanced Buildings:</strong> Require multiple resources (gears, steel, circuits, etc.)</li>
+                        <li>🏗️ <strong>Basic Buildings:</strong> Cost only iron or copper (miners, conveyors, submitters)</li>
+                        <li>⚙️ <strong>Advanced Buildings:</strong> Require multiple special items (gears, steel, circuits, motors, etc.)</li>
+                        <li>🥇 <strong>Gold Miners:</strong> Cost 10 iron + 2 gears</li>
+                        <li>🏭 <strong>Circuit Factory:</strong> Cost 15 iron + 3 gears + 5 steel</li>
+                        <li>🤖 <strong>Robot Factory:</strong> Cost 100 iron + 25 gears + 30 steel + 10 circuits + 3 motors</li>
                         <li>💰 <strong>Cost Display:</strong> Hover over buildings to see exact costs</li>
-                        <li>🔄 <strong>Refunds:</strong> Deleting buildings refunds 50% of resources</li>
+                        <li>🔄 <strong>Refunds:</strong> Deleting buildings refunds 50% of all resources</li>
                     </ul>
                 </div>
                 
@@ -371,6 +374,69 @@
                         <li>🖱️ <strong>Right-Click:</strong> Right-click buildings for detailed status</li>
                         <li>📖 <strong>Recipe Book:</strong> Check discovered items and their uses</li>
                     </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Debug Modal -->
+    <div class="modal-overlay" id="debugModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🐛 Debug Menu</h2>
+                <button class="modal-close" id="closeDebugModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="debug-section">
+                    <h3>🔧 Resource Management</h3>
+                    <div class="debug-controls">
+                        <button class="debug-btn" id="addIronBtn">+100 Iron</button>
+                        <button class="debug-btn" id="addCopperBtn">+100 Copper</button>
+                        <button class="debug-btn" id="addGoldBtn">+100 Gold</button>
+                        <button class="debug-btn" id="addSteelBtn">+100 Steel</button>
+                        <button class="debug-btn" id="addGearBtn">+100 Gears</button>
+                        <button class="debug-btn" id="addCircuitBtn">+100 Circuits</button>
+                        <button class="debug-btn" id="addMotorBtn">+100 Motors</button>
+                        <button class="debug-btn" id="addComputerBtn">+100 Computers</button>
+                        <button class="debug-btn" id="addRobotBtn">+100 Robots</button>
+                        <button class="debug-btn" id="addCoalBtn">+100 Coal</button>
+                        <button class="debug-btn" id="addUraniumBtn">+100 Uranium</button>
+                    </div>
+                </div>
+                
+                <div class="debug-section">
+                    <h3>⚡ Power System</h3>
+                    <div class="debug-controls">
+                        <button class="debug-btn" id="addPowerBtn">+1000 Power</button>
+                        <button class="debug-btn" id="maxPowerBtn">Max Power</button>
+                    </div>
+                </div>
+                
+                <div class="debug-section">
+                    <h3>🔬 Research System</h3>
+                    <div class="debug-controls">
+                        <button class="debug-btn" id="addResearchBtn">+100 Research Points</button>
+                        <button class="debug-btn" id="maxResearchBtn">Max Research Level</button>
+                    </div>
+                </div>
+                
+                <div class="debug-section">
+                    <h3>🏗️ Building Management</h3>
+                    <div class="debug-controls">
+                        <button class="debug-btn" id="clearBuildingsBtn">Clear All Buildings</button>
+                        <button class="debug-btn" id="unlockAllBtn">Unlock All Buildings</button>
+                    </div>
+                </div>
+                
+                <div class="debug-section">
+                    <h3>📊 Game State</h3>
+                    <div class="debug-info">
+                        <p><strong>Current Resources:</strong></p>
+                        <div id="debugResourceDisplay"></div>
+                        <p><strong>Power Grid:</strong> <span id="debugPowerDisplay"></span></p>
+                        <p><strong>Research Level:</strong> <span id="debugResearchDisplay"></span></p>
+                        <p><strong>Buildings Placed:</strong> <span id="debugBuildingCount"></span></p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -452,6 +518,7 @@
                 </div>
                 <div class="settings-section">
                     <h3>Game Actions</h3>
+                    <button class="debug-btn" id="debugMenuBtn">🐛 Debug Menu</button>
                     <button class="reset-btn" id="resetGameBtn">🔄 Reset Game</button>
                 </div>
             </div>

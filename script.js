@@ -477,6 +477,7 @@ class FactoryGame {
     
     init() {
         this.setupEventListeners();
+        this.setupDebugEventListeners();
         this.resizeCanvas();
         this.draw();
         
@@ -555,6 +556,15 @@ class FactoryGame {
         // Settings modal
         document.getElementById('closeSettingsModal').addEventListener('click', () => {
             this.closeSettingsModal();
+        });
+        
+        // Debug menu button
+        document.getElementById('debugMenuBtn').addEventListener('click', () => {
+            this.openDebugModal();
+        });
+        
+        document.getElementById('closeDebugModal').addEventListener('click', () => {
+            this.closeDebugModal();
         });
         
         // Reset game button
@@ -2767,6 +2777,165 @@ class FactoryGame {
     closeSettingsModal() {
         const modal = document.getElementById('settingsModal');
         modal.style.display = 'none';
+    }
+    
+    openDebugModal() {
+        const modal = document.getElementById('debugModal');
+        modal.style.display = 'flex';
+        this.updateDebugDisplay();
+    }
+    
+    closeDebugModal() {
+        const modal = document.getElementById('debugModal');
+        modal.style.display = 'none';
+    }
+    
+    // Debug system
+    updateDebugDisplay() {
+        // Update resource display
+        const resourceDisplay = document.getElementById('debugResourceDisplay');
+        if (resourceDisplay) {
+            let html = '';
+            for (const [resource, amount] of Object.entries(this.resources)) {
+                html += `<span class="debug-resource">${resource}: ${amount}</span> `;
+            }
+            resourceDisplay.innerHTML = html;
+        }
+        
+        // Update power display
+        const powerDisplay = document.getElementById('debugPowerDisplay');
+        if (powerDisplay) {
+            powerDisplay.textContent = `${this.powerGrid.totalProduction}/${this.powerGrid.totalConsumption} (${Math.round(this.powerGrid.efficiency * 100)}%)`;
+        }
+        
+        // Update research display
+        const researchDisplay = document.getElementById('debugResearchDisplay');
+        if (researchDisplay) {
+            researchDisplay.textContent = `Level ${this.researchLevel} (${this.researchProgress} points)`;
+        }
+        
+        // Update building count
+        const buildingCount = document.getElementById('debugBuildingCount');
+        if (buildingCount) {
+            buildingCount.textContent = this.buildings.size;
+        }
+    }
+    
+    setupDebugEventListeners() {
+        // Resource buttons
+        document.getElementById('addIronBtn').addEventListener('click', () => {
+            this.resources.iron += 100;
+            this.updateResourceDisplay();
+            this.updateDebugDisplay();
+        });
+        
+        document.getElementById('addCopperBtn').addEventListener('click', () => {
+            this.resources.copper += 100;
+            this.updateResourceDisplay();
+            this.updateDebugDisplay();
+        });
+        
+        document.getElementById('addGoldBtn').addEventListener('click', () => {
+            this.resources.gold += 100;
+            this.updateResourceDisplay();
+            this.updateDebugDisplay();
+        });
+        
+        document.getElementById('addSteelBtn').addEventListener('click', () => {
+            this.resources.steel += 100;
+            this.updateResourceDisplay();
+            this.updateDebugDisplay();
+        });
+        
+        document.getElementById('addGearBtn').addEventListener('click', () => {
+            this.resources.gear += 100;
+            this.updateResourceDisplay();
+            this.updateDebugDisplay();
+        });
+        
+        document.getElementById('addCircuitBtn').addEventListener('click', () => {
+            this.resources.circuit += 100;
+            this.updateResourceDisplay();
+            this.updateDebugDisplay();
+        });
+        
+        document.getElementById('addMotorBtn').addEventListener('click', () => {
+            this.resources.motor += 100;
+            this.updateResourceDisplay();
+            this.updateDebugDisplay();
+        });
+        
+        document.getElementById('addComputerBtn').addEventListener('click', () => {
+            this.resources.computer += 100;
+            this.updateResourceDisplay();
+            this.updateDebugDisplay();
+        });
+        
+        document.getElementById('addRobotBtn').addEventListener('click', () => {
+            this.resources.robot += 100;
+            this.updateResourceDisplay();
+            this.updateDebugDisplay();
+        });
+        
+        document.getElementById('addCoalBtn').addEventListener('click', () => {
+            this.resources.coal += 100;
+            this.updateResourceDisplay();
+            this.updateDebugDisplay();
+        });
+        
+        document.getElementById('addUraniumBtn').addEventListener('click', () => {
+            this.resources.uranium += 100;
+            this.updateResourceDisplay();
+            this.updateDebugDisplay();
+        });
+        
+        // Power buttons
+        document.getElementById('addPowerBtn').addEventListener('click', () => {
+            this.resources.power += 1000;
+            this.updateResourceDisplay();
+            this.updateDebugDisplay();
+        });
+        
+        document.getElementById('maxPowerBtn').addEventListener('click', () => {
+            this.resources.power = 999999;
+            this.updateResourceDisplay();
+            this.updateDebugDisplay();
+        });
+        
+        // Research buttons
+        document.getElementById('addResearchBtn').addEventListener('click', () => {
+            this.researchProgress += 100;
+            this.checkResearchAdvancement();
+            this.updateResourceDisplay();
+            this.updateDebugDisplay();
+        });
+        
+        document.getElementById('maxResearchBtn').addEventListener('click', () => {
+            this.researchLevel = 8;
+            this.researchProgress = 0;
+            this.updateResourceDisplay();
+            this.updateDebugDisplay();
+        });
+        
+        // Building management buttons
+        document.getElementById('clearBuildingsBtn').addEventListener('click', () => {
+            if (confirm('Clear all buildings?')) {
+                this.buildings.clear();
+                this.items.clear();
+                this.storage.clear();
+                this.draw();
+                this.updateDebugDisplay();
+            }
+        });
+        
+        document.getElementById('unlockAllBtn').addEventListener('click', () => {
+            // Unlock all items
+            Object.keys(this.recipes).forEach(item => {
+                this.discoveredItems.add(item);
+            });
+            this.updateResourceDisplay();
+            this.updateDebugDisplay();
+        });
     }
     
     // Reset game system
