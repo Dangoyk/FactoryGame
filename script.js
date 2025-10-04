@@ -22,6 +22,16 @@ class FactoryGame {
         this.holograms = [];
         this.tutorialCompleted = false;
         
+        // Sound system
+        this.sounds = {
+            place: this.createSound(200, 0.1, 'sine'),
+            delete: this.createSound(150, 0.1, 'sawtooth'),
+            research: this.createSound(400, 0.2, 'triangle'),
+            collect: this.createSound(600, 0.05, 'square'),
+            error: this.createSound(100, 0.3, 'sawtooth')
+        };
+        this.soundEnabled = true;
+        
         // Game state
         this.resources = {
             iron: 8,
@@ -42,6 +52,7 @@ class FactoryGame {
         // Research system
         this.researchLevel = 0;
         this.researchProgress = 0;
+        this.lastResearchClick = 0; // Prevent spam clicking
         this.researchRequirements = {
             1: { items: { iron: 10 }, unlocks: ['copperMiner', 'roller'] },
             2: { items: { copper: 5, ironRod: 3 }, unlocks: ['furnace', 'storage'] },
@@ -374,6 +385,39 @@ class FactoryGame {
         this.gameLoop();
     }
     
+    createSound(frequency, duration, waveType = 'sine') {
+        return () => {
+            if (!this.soundEnabled) return;
+            
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            oscillator.type = waveType;
+            
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        };
+    }
+    
+    playSound(soundName) {
+        if (this.sounds[soundName]) {
+            this.sounds[soundName]();
+        }
+    }
+    
+    toggleSound() {
+        this.soundEnabled = !this.soundEnabled;
+        console.log(`Sound ${this.soundEnabled ? 'enabled' : 'disabled'}`);
+    }
+    
     setupEventListeners() {
         // Menu toggle
         this.menuToggle.addEventListener('click', () => {
@@ -398,6 +442,11 @@ class FactoryGame {
         // Reset game button
         document.getElementById('resetGameBtn').addEventListener('click', () => {
             this.resetGame();
+        });
+        
+        // Sound toggle
+        document.getElementById('soundToggle').addEventListener('change', (e) => {
+            this.soundEnabled = e.target.checked;
         });
         
         // Tutorial buttons
@@ -701,14 +750,29 @@ class FactoryGame {
         this.ctx.lineWidth = 2;
         this.ctx.strokeRect(x + 2, y + 2, this.gridSize - 4, this.gridSize - 4);
         
+        // Draw production indicator if building is actively producing
+        if (building.processing || building.lastProduction) {
+            const timeSinceLastProduction = building.lastProduction ? (Date.now() - building.lastProduction) / 1000 : 0;
+            if (timeSinceLastProduction < 2) { // Show indicator for 2 seconds after production
+                this.ctx.fillStyle = '#4CAF50';
+                this.ctx.fillRect(x + this.gridSize - 8, y + 2, 6, 6);
+            }
+        }
+        
         // Special drawing for conveyor animation
         if (building.type === 'conveyor') {
             this.drawConveyorAnimation(building, x, y);
         } else {
-            // Draw building icon with rotation
+            // Draw building icon with improved rotation
             this.ctx.save();
             this.ctx.translate(x + this.gridSize/2, y + this.gridSize/2);
-            this.ctx.rotate(building.rotation * Math.PI / 2);
+            
+            // Use mirroring for 180-degree rotation instead of upside-down
+            if (building.rotation === 2) {
+                this.ctx.scale(-1, 1); // Mirror horizontally
+            } else {
+                this.ctx.rotate(building.rotation * Math.PI / 2);
+            }
             
             this.ctx.font = '20px Arial';
             this.ctx.textAlign = 'center';
@@ -786,10 +850,16 @@ class FactoryGame {
         this.ctx.strokeRect(x + 2, y + 2, this.gridSize - 4, this.gridSize - 4);
         this.ctx.setLineDash([]);
         
-        // Draw building icon with rotation
+        // Draw building icon with improved rotation
         this.ctx.save();
         this.ctx.translate(x + this.gridSize/2, y + this.gridSize/2);
-        this.ctx.rotate(this.selectedBuildingRotation * Math.PI / 2);
+        
+        // Use mirroring for 180-degree rotation instead of upside-down
+        if (this.selectedBuildingRotation === 2) {
+            this.ctx.scale(-1, 1); // Mirror horizontally
+        } else {
+            this.ctx.rotate(this.selectedBuildingRotation * Math.PI / 2);
+        }
         
         this.ctx.font = '20px Arial';
         this.ctx.textAlign = 'center';
@@ -924,6 +994,11 @@ class FactoryGame {
         document.getElementById('robotCount').textContent = this.resources.robot;
         this.updateBuildingAvailability();
         this.updateResearchGoal(); // Update progress bar when resources change
+        
+        // Update research modal if it's open
+        if (document.getElementById('researchModal').style.display === 'flex') {
+            this.populateResearchModal();
+        }
     }
     
     updateBuildingAvailability() {
@@ -1000,6 +1075,38 @@ class FactoryGame {
         } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
             this.camera.y += this.gridSize * 2;
             this.draw();
+        } else if (e.key === 'h' || e.key === 'H') {
+            // Return to spawn/home
+            this.returnToSpawn();
+        } else if (e.key === 'b' || e.key === 'B') {
+            // Toggle build menu
+            this.toggleBuildMenu();
+        } else if (e.key === 't' || e.key === 'T') {
+            // Open research modal
+            this.openResearchModal();
+        } else if (e.key === 'p' || e.key === 'P') {
+            // Open recipe book
+            this.openRecipeBook();
+        } else if (e.key === '1') {
+            this.selectBuilding('ironMiner');
+        } else if (e.key === '2') {
+            this.selectBuilding('conveyor');
+        } else if (e.key === '3') {
+            this.selectBuilding('submitter');
+        } else if (e.key === '4') {
+            this.selectBuilding('copperMiner');
+        } else if (e.key === '5') {
+            this.selectBuilding('roller');
+        } else if (e.key === '6') {
+            this.selectBuilding('storage');
+        } else if (e.key === '7') {
+            this.selectBuilding('furnace');
+        } else if (e.key === '8') {
+            this.selectBuilding('assembler');
+        } else if (e.key === 'm' || e.key === 'M') {
+            // Toggle sound
+            this.toggleSound();
+            document.getElementById('soundToggle').checked = this.soundEnabled;
         }
     }
     
@@ -1024,7 +1131,8 @@ class FactoryGame {
             // Remove building
             this.buildings.delete(key);
             
-            // Update UI
+            // Play sound and update UI
+            this.playSound('delete');
             this.updateResourceDisplay();
             this.updateBuildingAvailability();
             this.draw();
@@ -1588,8 +1696,41 @@ class FactoryGame {
     }
     
     advanceResearchLevel() {
+        // Prevent spam clicking (1 second cooldown)
+        const now = Date.now();
+        if (now - this.lastResearchClick < 1000) {
+            console.log('Please wait before clicking research again!');
+            // Visual feedback for cooldown
+            const nextLevel = this.researchLevel + 1;
+            const button = document.getElementById(`researchBtn${nextLevel}`);
+            if (button) {
+                button.style.opacity = '0.5';
+                button.textContent = 'Please wait...';
+                setTimeout(() => {
+                    button.style.opacity = '1';
+                    button.textContent = `Research Level ${nextLevel}`;
+                }, 1000);
+            }
+            return;
+        }
+        this.lastResearchClick = now;
+        
         const nextLevel = this.researchLevel + 1;
         const requirements = this.researchRequirements[nextLevel];
+        
+        // Check if requirements exist
+        if (!requirements) {
+            console.log('No more research levels available!');
+            return;
+        }
+        
+        // Validate that we have enough resources
+        for (const [itemType, requiredAmount] of Object.entries(requirements.items)) {
+            if ((this.resources[itemType] || 0) < requiredAmount) {
+                console.log(`Not enough ${itemType} to advance research level ${nextLevel}`);
+                return;
+            }
+        }
         
         // Consume required items
         for (const [itemType, requiredAmount] of Object.entries(requirements.items)) {
@@ -1600,10 +1741,16 @@ class FactoryGame {
         this.researchLevel = nextLevel;
         this.researchProgress = 0;
         
-        // Update UI
+        // Play sound and update UI
+        this.playSound('research');
         this.updateResourceDisplay();
         this.updateBuildingAvailability();
         this.updateResearchGoal();
+        
+        // Refresh research modal if it's open
+        if (document.getElementById('researchModal').style.display === 'flex') {
+            this.populateResearchModal();
+        }
         
         console.log(`Research Level ${nextLevel} unlocked!`);
     }
@@ -1617,6 +1764,7 @@ class FactoryGame {
             // Add to resources
             this.resources[item.type] = (this.resources[item.type] || 0) + 1;
             this.items.delete(key);
+            this.playSound('collect');
             this.updateResourceDisplay();
         }
     }
@@ -1940,6 +2088,38 @@ class FactoryGame {
         this.draw();
     }
     
+    toggleBuildMenu() {
+        const menu = document.getElementById('buildMenu');
+        const isCollapsed = menu.classList.contains('collapsed');
+        if (isCollapsed) {
+            menu.classList.remove('collapsed');
+        } else {
+            menu.classList.add('collapsed');
+        }
+    }
+    
+    openResearchModal() {
+        this.populateResearchModal();
+        document.getElementById('researchModal').style.display = 'flex';
+    }
+    
+    openRecipeBook() {
+        this.populateRecipeBook();
+        document.getElementById('recipeBookModal').style.display = 'flex';
+    }
+    
+    selectBuilding(buildingType) {
+        if (this.isBuildingUnlocked(buildingType) && this.canAfford(buildingType)) {
+            this.selectedBuilding = buildingType;
+            this.selectedBuildingRotation = 0;
+            this.deleteMode = false;
+            this.updateBuildingSelection();
+            this.updateDeleteModeDisplay();
+            this.canvas.style.cursor = 'crosshair';
+            this.draw();
+        }
+    }
+    
     // Tooltip system
     showBuildingTooltip(element) {
         const buildingType = element.dataset.building;
@@ -2228,7 +2408,7 @@ class FactoryGame {
         const researchLevels = document.getElementById('researchLevels');
         researchLevels.innerHTML = '';
         
-        for (let level = 1; level <= 5; level++) {
+        for (let level = 1; level <= 8; level++) {
             const requirements = this.researchRequirements[level];
             const levelItem = document.createElement('div');
             
@@ -2284,7 +2464,7 @@ class FactoryGame {
                     </div>
                 ` : ''}
                 ${level === this.researchLevel + 1 && requirementsMet ? `
-                    <button class="research-button" onclick="game.advanceResearchLevel()">Research Level ${level}</button>
+                    <button class="research-button" id="researchBtn${level}" onclick="game.advanceResearchLevel()">Research Level ${level}</button>
                 ` : ''}
             `;
             
@@ -2554,6 +2734,7 @@ class FactoryGame {
         
         // Check if we can afford it
         if (!this.canAfford(type)) {
+            this.playSound('error');
             return;
         }
         
@@ -2579,7 +2760,8 @@ class FactoryGame {
         this.selectedBuilding = null;
         this.selectedBuildingRotation = 0;
         
-        // Update UI
+        // Play sound and update UI
+        this.playSound('place');
         this.updateResourceDisplay();
         this.updateBuildingSelection();
         this.draw();
