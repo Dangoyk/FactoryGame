@@ -1116,7 +1116,16 @@ class FactoryGame {
                 // Show actual building info
                 item.querySelector('.building-icon').textContent = building.icon;
                 item.querySelector('.building-name').textContent = building.name;
-                item.querySelector('.building-cost').textContent = `Cost: ${building.cost} ${buildingType === 'roller' ? 'Copper' : 'Iron'}`;
+                // Display cost properly for both single and multi-resource buildings
+                if (building.costItems) {
+                    const costParts = [];
+                    for (const [resource, amount] of Object.entries(building.costItems)) {
+                        costParts.push(`${amount} ${resource}`);
+                    }
+                    item.querySelector('.building-cost').textContent = `Cost: ${costParts.join(' + ')}`;
+                } else {
+                    item.querySelector('.building-cost').textContent = `Cost: ${building.cost} ${buildingType === 'roller' ? 'Copper' : 'Iron'}`;
+                }
                 
                 if (canAfford) {
                     item.classList.remove('disabled');
