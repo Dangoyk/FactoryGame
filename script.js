@@ -58,7 +58,7 @@ class FactoryGame {
         };
         
         // Discovery system
-        this.discoveredItems = new Set(['iron', 'coal', 'gold']); // Start with iron, coal, and gold discovered
+        this.discoveredItems = new Set(['iron', 'coal']); // Start with iron and coal discovered
         
         // Research system
         this.researchLevel = 0;
@@ -1470,13 +1470,18 @@ class FactoryGame {
             const rotatedOutputs = this.rotateDirections(buildingType.outputs, building.rotation);
             const outputPos = this.getOutputPosition(building, rotatedOutputs[0]);
             if (outputPos && !this.items.has(`${outputPos.x},${outputPos.y}`)) {
-                // Create iron item
+                // Create item and discover it
+                const itemType = buildingType.productionType;
                 this.items.set(`${outputPos.x},${outputPos.y}`, {
-                    type: buildingType.productionType,
+                    type: itemType,
                     x: outputPos.x,
                     y: outputPos.y,
                     progress: 0
                 });
+                
+                // Discover the item if it's not already discovered
+                this.discoverItem(itemType);
+                
                 building.lastProduction = Date.now();
             }
         }
@@ -1781,6 +1786,12 @@ class FactoryGame {
         if (!this.discoveredItems.has(itemType)) {
             this.discoveredItems.add(itemType);
             console.log(`Discovered: ${this.recipes[itemType].name}!`);
+            
+            // Update recipe book if it's open
+            const recipeBookModal = document.getElementById('recipeBookModal');
+            if (recipeBookModal && recipeBookModal.style.display === 'flex') {
+                this.populateRecipeBook();
+            }
         }
     }
     
@@ -2938,6 +2949,12 @@ class FactoryGame {
             this.researchLevel = 8;
             this.researchProgress = 0;
             
+            // Update recipe book if it's open
+            const recipeBookModal = document.getElementById('recipeBookModal');
+            if (recipeBookModal && recipeBookModal.style.display === 'flex') {
+                this.populateRecipeBook();
+            }
+            
             this.updateResourceDisplay();
             this.updateDebugDisplay();
         });
@@ -2966,7 +2983,7 @@ class FactoryGame {
             
             this.researchLevel = 0;
             this.researchProgress = 0;
-            this.discoveredItems = new Set(['iron', 'coal', 'gold']);
+            this.discoveredItems = new Set(['iron', 'coal']);
             this.buildings.clear();
             this.items.clear();
             this.storage.clear();
