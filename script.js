@@ -27,6 +27,17 @@ class FactoryGame {
         // Discovery system
         this.discoveredItems = new Set(['iron']); // Start with iron discovered
         
+        // Research system
+        this.researchLevel = 0;
+        this.researchProgress = 0;
+        this.researchRequirements = {
+            1: { items: { iron: 10 }, unlocks: ['copperMiner', 'roller'] },
+            2: { items: { copper: 5, ironRod: 3 }, unlocks: ['furnace', 'storage'] },
+            3: { items: { steel: 2, copperRod: 2 }, unlocks: ['assembler'] },
+            4: { items: { gear: 1, steel: 5 }, unlocks: ['advancedMiner', 'splitter'] },
+            5: { items: { gear: 3, steel: 10 }, unlocks: ['factory', 'lab'] }
+        };
+        
         // Building system
         this.selectedBuilding = null;
         this.selectedBuildingRotation = 0; // 0, 1, 2, 3 for 0°, 90°, 180°, 270°
@@ -104,6 +115,46 @@ class FactoryGame {
                 productionRate: 0.2, // gears per second
                 name: 'Assembler',
                 description: 'Assembles iron rods and copper rods into gears. Requires both inputs.'
+            },
+            advancedMiner: { 
+                cost: 15, 
+                icon: '⛏️', 
+                color: '#FFD700',
+                inputs: [],
+                outputs: ['right'],
+                productionRate: 2, // items per second
+                productionType: 'iron',
+                name: 'Advanced Miner',
+                description: 'High-tech miner that produces 2 iron per second. Requires research level 4.'
+            },
+            splitter: { 
+                cost: 5, 
+                icon: '↔️', 
+                color: '#9370DB',
+                inputs: ['left'],
+                outputs: ['right', 'up', 'down'],
+                name: 'Item Splitter',
+                description: 'Splits incoming items to multiple outputs. Requires research level 4.'
+            },
+            factory: { 
+                cost: 25, 
+                icon: '🏭', 
+                color: '#FF6347',
+                inputs: ['left', 'up'],
+                outputs: ['right'],
+                productionRate: 1, // items per second
+                name: 'Advanced Factory',
+                description: 'Produces advanced components from multiple inputs. Requires research level 5.'
+            },
+            lab: { 
+                cost: 20, 
+                icon: '🧪', 
+                color: '#00CED1',
+                inputs: ['left', 'up', 'down'],
+                outputs: ['right'],
+                productionRate: 0.1, // research points per second
+                name: 'Research Lab',
+                description: 'Generates research points for unlocking new technologies. Requires research level 5.'
             },
             submitter: { 
                 cost: 2, 
@@ -264,6 +315,16 @@ class FactoryGame {
         // Recipe book modal
         document.getElementById('closeRecipeModal').addEventListener('click', () => {
             this.closeRecipeBook();
+        });
+        
+        // Research button
+        document.getElementById('researchBtn').addEventListener('click', () => {
+            this.openResearchModal();
+        });
+        
+        // Research modal
+        document.getElementById('closeResearchModal').addEventListener('click', () => {
+            this.closeResearchModal();
         });
         
         // Recipe category buttons
@@ -708,12 +769,35 @@ class FactoryGame {
     updateBuildingAvailability() {
         document.querySelectorAll('.building-item').forEach(item => {
             const buildingType = item.dataset.building;
-            if (this.canAfford(buildingType)) {
+            const canAfford = this.canAfford(buildingType);
+            const isUnlocked = this.isBuildingUnlocked(buildingType);
+            
+            if (canAfford && isUnlocked) {
                 item.classList.remove('disabled');
             } else {
                 item.classList.add('disabled');
             }
         });
+    }
+    
+    isBuildingUnlocked(buildingType) {
+        // Check if building is unlocked by research level
+        const building = this.buildingTypes[buildingType];
+        if (!building) return false;
+        
+        // Basic buildings are always unlocked
+        const basicBuildings = ['ironMiner', 'conveyor', 'submitter'];
+        if (basicBuildings.includes(buildingType)) return true;
+        
+        // Check research requirements for advanced buildings
+        for (let level = 1; level <= 5; level++) {
+            const requirements = this.researchRequirements[level];
+            if (requirements && requirements.unlocks.includes(buildingType)) {
+                return this.researchLevel >= level;
+            }
+        }
+        
+        return false;
     }
     
     handleKeyPress(e) {
@@ -829,6 +913,7 @@ class FactoryGame {
         switch (building.type) {
             case 'ironMiner':
             case 'copperMiner':
+            case 'advancedMiner':
                 this.updateMiner(building, buildingType, deltaTime);
                 break;
             case 'conveyor':
@@ -842,6 +927,15 @@ class FactoryGame {
                 break;
             case 'assembler':
                 this.updateAssembler(building, buildingType, deltaTime);
+                break;
+            case 'splitter':
+                this.updateSplitter(building, buildingType, deltaTime);
+                break;
+            case 'factory':
+                this.updateFactory(building, buildingType, deltaTime);
+                break;
+            case 'lab':
+                this.updateLab(building, buildingType, deltaTime);
                 break;
             case 'storage':
                 this.updateStorageBuilding(building, buildingType, deltaTime);
@@ -1164,6 +1258,133 @@ class FactoryGame {
         }
     }
     
+    updateSplitter(building, buildingType, deltaTime) {
+        // Split items to multiple outputs
+        const key = `${building.x},${building.y}`;
+        const item = this.items.get(key);
+        
+        if (item) {
+            const rotatedOutputs = this.rotateDirections(buildingType.outputs, building.rotation);
+            let outputCount = 0;
+            
+            // Try to output to each direction
+            for (const direction of rotatedOutputs) {
+                const outputPos = this.getOutputPosition(building, direction);
+                if (outputPos && !this.items.has(`${outputPos.x},${outputPos.y}`) && 
+                    !this.isStorageFull(outputPos.x, outputPos.y)) {
+                    // Create item at output
+                    this.items.set(`${outputPos.x},${outputPos.y}`, {
+                        type: item.type,
+                        x: outputPos.x,
+                        y: outputPos.y,
+                        progress: 0
+                    });
+                    outputCount++;
+                }
+            }
+            
+            // Remove input item if at least one output was successful
+            if (outputCount > 0) {
+                this.items.delete(key);
+            }
+        }
+    }
+    
+    updateFactory(building, buildingType, deltaTime) {
+        // Advanced factory processing
+        const key = `${building.x},${building.y}`;
+        const item = this.items.get(key);
+        
+        if (item && !building.processing) {
+            building.processing = true;
+            building.processingTime = 0;
+            building.processingItem = item.type;
+        }
+        
+        if (building.processing) {
+            building.processingTime += deltaTime;
+            
+            if (building.processingTime >= 1 / buildingType.productionRate) {
+                // Get rotated output direction
+                const rotatedOutputs = this.rotateDirections(buildingType.outputs, building.rotation);
+                const outputPos = this.getOutputPosition(building, rotatedOutputs[0]);
+                
+                if (outputPos && !this.items.has(`${outputPos.x},${outputPos.y}`) && 
+                    !this.isStorageFull(outputPos.x, outputPos.y)) {
+                    // Create advanced item (gear for now)
+                    this.items.set(`${outputPos.x},${outputPos.y}`, {
+                        type: 'gear',
+                        x: outputPos.x,
+                        y: outputPos.y,
+                        progress: 0
+                    });
+                    
+                    // Remove input item
+                    this.items.delete(key);
+                }
+                
+                building.processing = false;
+                building.processingTime = 0;
+                building.processingItem = null;
+            }
+        }
+    }
+    
+    updateLab(building, buildingType, deltaTime) {
+        // Generate research points
+        if (!building.lastResearch) {
+            building.lastResearch = Date.now();
+        }
+        
+        const timeSinceLastResearch = (Date.now() - building.lastResearch) / 1000;
+        if (timeSinceLastResearch >= 1 / buildingType.productionRate) {
+            this.researchProgress += 1;
+            building.lastResearch = Date.now();
+            
+            // Check if we can advance research level
+            this.checkResearchAdvancement();
+        }
+    }
+    
+    checkResearchAdvancement() {
+        const nextLevel = this.researchLevel + 1;
+        const requirements = this.researchRequirements[nextLevel];
+        
+        if (requirements) {
+            let canAdvance = true;
+            for (const [itemType, requiredAmount] of Object.entries(requirements.items)) {
+                if (this.resources[itemType] < requiredAmount) {
+                    canAdvance = false;
+                    break;
+                }
+            }
+            
+            if (canAdvance) {
+                this.advanceResearchLevel();
+            }
+        }
+    }
+    
+    advanceResearchLevel() {
+        const nextLevel = this.researchLevel + 1;
+        const requirements = this.researchRequirements[nextLevel];
+        
+        // Consume required items
+        for (const [itemType, requiredAmount] of Object.entries(requirements.items)) {
+            this.resources[itemType] -= requiredAmount;
+        }
+        
+        // Advance level
+        this.researchLevel = nextLevel;
+        this.researchProgress = 0;
+        
+        // Update UI
+        this.updateResourceDisplay();
+        this.updateBuildingAvailability();
+        
+        console.log(`Research Level ${nextLevel} unlocked!`);
+    }
+    
     updateSubmitter(building, buildingType, deltaTime) {
         // Collect items from inputs
         const key = `${building.x},${building.y}`;
@@ -1448,10 +1669,114 @@ class FactoryGame {
             recipeList.appendChild(recipeItem);
         });
     }
+    
+    // Research modal system
+    openResearchModal() {
+        const modal = document.getElementById('researchModal');
+        modal.style.display = 'flex';
+        this.populateResearchModal();
+    }
+    
+    closeResearchModal() {
+        const modal = document.getElementById('researchModal');
+        modal.style.display = 'none';
+    }
+    
+    populateResearchModal() {
+        // Update current level and progress
+        document.getElementById('currentLevel').textContent = this.researchLevel;
+        
+        const nextLevel = this.researchLevel + 1;
+        const requirements = this.researchRequirements[nextLevel];
+        let progressPercent = 0;
+        
+        if (requirements) {
+            let totalRequired = 0;
+            let totalMet = 0;
+            
+            for (const [itemType, requiredAmount] of Object.entries(requirements.items)) {
+                totalRequired += requiredAmount;
+                totalMet += Math.min(this.resources[itemType] || 0, requiredAmount);
+            }
+            
+            progressPercent = totalRequired > 0 ? (totalMet / totalRequired) * 100 : 0;
+        }
+        
+        document.getElementById('progressFill').style.width = `${progressPercent}%`;
+        document.getElementById('progressText').textContent = `${Math.round(progressPercent)}%`;
+        
+        // Populate research levels
+        const researchLevels = document.getElementById('researchLevels');
+        researchLevels.innerHTML = '';
+        
+        for (let level = 1; level <= 5; level++) {
+            const requirements = this.researchRequirements[level];
+            const levelItem = document.createElement('div');
+            
+            let status = 'locked';
+            let statusText = 'Locked';
+            
+            if (level <= this.researchLevel) {
+                status = 'unlocked';
+                statusText = 'Unlocked';
+            } else if (level === this.researchLevel + 1) {
+                status = 'current';
+                statusText = 'Available';
+            }
+            
+            levelItem.className = `research-level-item ${status}`;
+            
+            // Check if requirements are met
+            let requirementsMet = true;
+            if (requirements) {
+                for (const [itemType, requiredAmount] of Object.entries(requirements.items)) {
+                    if ((this.resources[itemType] || 0) < requiredAmount) {
+                        requirementsMet = false;
+                        break;
+                    }
+                }
+            }
+            
+            levelItem.innerHTML = `
+                <div class="research-level-header">
+                    <span class="research-level-title">Research Level ${level}</span>
+                    <span class="research-level-status ${status}">${statusText}</span>
+                </div>
+                ${requirements ? `
+                    <div class="research-requirements">
+                        <h4>Requirements:</h4>
+                        <div class="research-requirements-list">
+                            ${Object.entries(requirements.items).map(([itemType, amount]) => {
+                                const hasEnough = (this.resources[itemType] || 0) >= amount;
+                                return `<span class="research-requirement ${hasEnough ? 'met' : ''}">${this.recipes[itemType]?.icon || '❓'} ${amount} ${this.recipes[itemType]?.name || itemType}</span>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                ${requirements ? `
+                    <div class="research-unlocks">
+                        <h4>Unlocks:</h4>
+                        <div class="research-unlocks-list">
+                            ${requirements.unlocks.map(buildingType => {
+                                const building = this.buildingTypes[buildingType];
+                                return `<span class="research-unlock">${building.icon} ${building.name}</span>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                ${level === this.researchLevel + 1 && requirementsMet ? `
+                    <button class="research-button" onclick="game.advanceResearchLevel()">Research Level ${level}</button>
+                ` : ''}
+            `;
+            
+            researchLevels.appendChild(levelItem);
+        }
+    }
 }
 
 // Initialize the game when the page loads
+let game;
 document.addEventListener('DOMContentLoaded', () => {
-    new FactoryGame();
+    game = new FactoryGame();
 });
 

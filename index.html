@@ -66,6 +66,34 @@
                             <div class="building-cost">Cost: 8 Iron</div>
                         </div>
                     </div>
+                    <div class="building-item" data-building="advancedMiner">
+                        <div class="building-icon">⛏️</div>
+                        <div class="building-info">
+                            <div class="building-name">Advanced Miner</div>
+                            <div class="building-cost">Cost: 15 Iron</div>
+                        </div>
+                    </div>
+                    <div class="building-item" data-building="splitter">
+                        <div class="building-icon">↔️</div>
+                        <div class="building-info">
+                            <div class="building-name">Splitter</div>
+                            <div class="building-cost">Cost: 5 Iron</div>
+                        </div>
+                    </div>
+                    <div class="building-item" data-building="factory">
+                        <div class="building-icon">🏭</div>
+                        <div class="building-info">
+                            <div class="building-name">Factory</div>
+                            <div class="building-cost">Cost: 25 Iron</div>
+                        </div>
+                    </div>
+                    <div class="building-item" data-building="lab">
+                        <div class="building-icon">🧪</div>
+                        <div class="building-info">
+                            <div class="building-name">Research Lab</div>
+                            <div class="building-cost">Cost: 20 Iron</div>
+                        </div>
+                    </div>
                     <div class="building-item" data-building="submitter">
                         <div class="building-icon">📤</div>
                         <div class="building-info">
@@ -99,6 +127,7 @@
                 
                 <div class="bottom-controls">
                     <button class="recipe-btn" id="recipeBookBtn">📖 Recipe Book</button>
+                    <button class="research-btn" id="researchBtn">🔬 Research</button>
                 </div>
                 
                 <div class="resource-counter">
@@ -164,6 +193,32 @@
                 </div>
                 <div class="recipe-list" id="recipeList">
                     <!-- Recipes will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Research Modal -->
+    <div class="modal-overlay" id="researchModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔬 Research Center</h2>
+                <button class="modal-close" id="closeResearchModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="research-info">
+                    <div class="research-level">
+                        <h3>Current Research Level: <span id="currentLevel">0</span></h3>
+                        <div class="research-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progressFill"></div>
+                            </div>
+                            <span id="progressText">0%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="research-levels" id="researchLevels">
+                    <!-- Research levels will be populated by JavaScript -->
                 </div>
             </div>
         </div>
