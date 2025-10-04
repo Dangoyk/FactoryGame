@@ -43,11 +43,22 @@ class FactoryGame {
             circuit: 0,
             motor: 0,
             computer: 0,
-            robot: 0
+            robot: 0,
+            power: 0, // New power resource
+            coal: 5, // Starting coal for power generation
+            uranium: 0, // Fuel for nuclear reactors
+            gold: 0 // New gold resource for electronics
+        };
+        
+        // Power system
+        this.powerGrid = {
+            totalProduction: 0,
+            totalConsumption: 0,
+            efficiency: 1.0 // Multiplier for production rates based on power
         };
         
         // Discovery system
-        this.discoveredItems = new Set(['iron']); // Start with iron discovered
+        this.discoveredItems = new Set(['iron', 'coal', 'gold']); // Start with iron, coal, and gold discovered
         
         // Research system
         this.researchLevel = 0;
@@ -55,11 +66,11 @@ class FactoryGame {
         this.lastResearchClick = 0; // Prevent spam clicking
         this.researchRequirements = {
             1: { items: { iron: 10 }, unlocks: ['copperMiner', 'roller'] },
-            2: { items: { copper: 5, ironRod: 3 }, unlocks: ['furnace', 'storage'] },
-            3: { items: { steel: 2, copperRod: 2 }, unlocks: ['assembler'] },
+            2: { items: { copper: 5, ironRod: 3 }, unlocks: ['furnace', 'storage', 'coalGenerator'] },
+            3: { items: { steel: 2, copperRod: 2 }, unlocks: ['assembler', 'solarPanel', 'goldMiner'] },
             4: { items: { gear: 1, steel: 5 }, unlocks: ['advancedMiner', 'splitter'] },
             5: { items: { gear: 3, steel: 10 }, unlocks: ['factory', 'lab'] },
-            6: { items: { circuit: 2, motor: 1 }, unlocks: ['circuitFactory', 'motorFactory'] },
+            6: { items: { circuit: 2, motor: 1 }, unlocks: ['circuitFactory', 'motorFactory', 'nuclearReactor'] },
             7: { items: { computer: 1, robot: 1 }, unlocks: ['computerFactory', 'robotFactory'] },
             8: { items: { robot: 5, computer: 3 }, unlocks: ['quantumLab', 'timeMachine'] }
         };
@@ -78,6 +89,7 @@ class FactoryGame {
                 outputs: ['right'],
                 productionRate: 1, // iron per second
                 productionType: 'iron',
+                powerConsumption: 0, // No power needed initially
                 name: 'Iron Miner',
                 description: 'Extracts iron from the ground. Produces 1 iron per second. Outputs to the right.'
             },
@@ -89,8 +101,22 @@ class FactoryGame {
                 outputs: ['right'],
                 productionRate: 0.8, // copper per second
                 productionType: 'copper',
+                powerConsumption: 0, // No power needed initially
                 name: 'Copper Miner',
                 description: 'Extracts copper from the ground. Produces 0.8 copper per second. Outputs to the right.'
+            },
+            goldMiner: { 
+                cost: 15, 
+                costItems: { iron: 10, gear: 2 }, // Special cost requiring gears
+                icon: '⛏️', 
+                color: '#FFD700',
+                inputs: [],
+                outputs: ['right'],
+                productionRate: 0.3, // gold per second
+                productionType: 'gold',
+                powerConsumption: 3, // Requires power
+                name: 'Gold Miner',
+                description: 'Extracts gold from the ground. Produces 0.3 gold per second. Outputs to the right. Requires 3 power. Costs 10 iron + 2 gears.'
             },
             conveyor: { 
                 cost: 1, 
@@ -99,6 +125,7 @@ class FactoryGame {
                 inputs: ['left'],
                 outputs: ['right'],
                 speed: 1, // items per second
+                powerConsumption: 0, // No power needed initially
                 name: 'Conveyor Belt',
                 description: 'Transports items from left to right at 1 item per second. Essential for automation.'
             },
@@ -109,8 +136,9 @@ class FactoryGame {
                 inputs: ['left'],
                 outputs: ['right'],
                 productionRate: 0.5, // rods per second
+                powerConsumption: 2, // Requires power
                 name: 'Roller',
-                description: 'Rolls copper into copper rods and iron into iron rods. Processes 0.5 items per second.'
+                description: 'Rolls copper into copper rods and iron into iron rods. Processes 0.5 items per second. Requires 2 power.'
             },
             storage: { 
                 cost: 3, 
@@ -119,6 +147,7 @@ class FactoryGame {
                 inputs: ['left', 'up', 'down', 'right'],
                 outputs: ['left', 'up', 'down', 'right'],
                 capacity: 10,
+                powerConsumption: 0, // No power needed
                 name: 'Storage Container',
                 description: 'Stores up to 10 items. Can input and output from all directions.'
             },
@@ -129,8 +158,9 @@ class FactoryGame {
                 inputs: ['left'],
                 outputs: ['right'],
                 productionRate: 0.3, // steel per second
+                powerConsumption: 3, // Requires power
                 name: 'Furnace',
-                description: 'Smelts iron into steel. Requires iron input and produces steel output.'
+                description: 'Smelts iron into steel. Requires iron input and produces steel output. Requires 3 power.'
             },
             assembler: { 
                 cost: 8, 
@@ -139,19 +169,22 @@ class FactoryGame {
                 inputs: ['left', 'up'],
                 outputs: ['right'],
                 productionRate: 0.2, // gears per second
+                powerConsumption: 4, // Requires power
                 name: 'Assembler',
-                description: 'Assembles iron rods and copper rods into gears. Requires both inputs.'
+                description: 'Assembles iron rods and copper rods into gears. Requires both inputs. Requires 4 power.'
             },
             advancedMiner: { 
                 cost: 15, 
+                costItems: { iron: 20, gear: 5, steel: 3 }, // Special cost requiring multiple items
                 icon: '⛏️', 
                 color: '#FFD700',
                 inputs: [],
                 outputs: ['right'],
                 productionRate: 2, // items per second
                 productionType: 'iron',
+                powerConsumption: 5, // Requires power
                 name: 'Advanced Miner',
-                description: 'High-tech miner that produces 2 iron per second. Requires research level 4.'
+                description: 'High-tech miner that produces 2 iron per second. Requires research level 4. Requires 5 power. Costs 20 iron + 5 gears + 3 steel.'
             },
             splitter: { 
                 cost: 5, 
@@ -159,8 +192,9 @@ class FactoryGame {
                 color: '#9370DB',
                 inputs: ['left'],
                 outputs: ['right', 'up', 'down'],
+                powerConsumption: 1, // Requires power
                 name: 'Item Splitter',
-                description: 'Splits incoming items to multiple outputs. Requires research level 4.'
+                description: 'Splits incoming items to multiple outputs. Requires research level 4. Requires 1 power.'
             },
             factory: { 
                 cost: 25, 
@@ -169,8 +203,9 @@ class FactoryGame {
                 inputs: ['left', 'up'],
                 outputs: ['right'],
                 productionRate: 1, // items per second
+                powerConsumption: 8, // Requires power
                 name: 'Advanced Factory',
-                description: 'Produces advanced components from multiple inputs. Requires research level 5.'
+                description: 'Produces advanced components from multiple inputs. Requires research level 5. Requires 8 power.'
             },
             lab: { 
                 cost: 20, 
@@ -179,8 +214,9 @@ class FactoryGame {
                 inputs: ['left', 'up', 'down'],
                 outputs: ['right'],
                 productionRate: 0.1, // research points per second
+                powerConsumption: 6, // Requires power
                 name: 'Research Lab',
-                description: 'Generates research points for unlocking new technologies. Requires research level 5.'
+                description: 'Generates research points for unlocking new technologies. Requires research level 5. Requires 6 power.'
             },
              submitter: { 
                  cost: 2, 
@@ -193,63 +229,110 @@ class FactoryGame {
              },
              circuitFactory: { 
                  cost: 12, 
+                 costItems: { iron: 15, gear: 3, steel: 5 }, // Special cost requiring multiple items
                  icon: '🔌', 
                  color: '#FF69B4',
                  inputs: ['left', 'up'],
                  outputs: ['right'],
                  productionRate: 0.3,
+                 powerConsumption: 5, // Requires power
                  name: 'Circuit Factory',
-                 description: 'Produces circuits from copper and steel. Requires research level 6.'
+                 description: 'Produces circuits from gold and steel. Requires research level 6. Requires 5 power. Costs 15 iron + 3 gears + 5 steel.'
              },
              motorFactory: { 
                  cost: 15, 
+                 costItems: { iron: 20, gear: 8, steel: 8 }, // Special cost requiring multiple items
                  icon: '⚡', 
                  color: '#FFD700',
                  inputs: ['left', 'up'],
                  outputs: ['right'],
                  productionRate: 0.2,
+                 powerConsumption: 6, // Requires power
                  name: 'Motor Factory',
-                 description: 'Produces motors from steel and gears. Requires research level 6.'
+                 description: 'Produces motors from steel and gears. Requires research level 6. Requires 6 power. Costs 20 iron + 8 gears + 8 steel.'
              },
              computerFactory: { 
                  cost: 30, 
+                 costItems: { iron: 50, gear: 15, steel: 20, circuit: 5 }, // Special cost requiring multiple items
                  icon: '💻', 
                  color: '#00BFFF',
                  inputs: ['left', 'up', 'down'],
                  outputs: ['right'],
                  productionRate: 0.1,
+                 powerConsumption: 10, // Requires power
                  name: 'Computer Factory',
-                 description: 'Produces computers from circuits and motors. Requires research level 7.'
+                 description: 'Produces computers from circuits and motors. Requires research level 7. Requires 10 power. Costs 50 iron + 15 gears + 20 steel + 5 circuits.'
              },
              robotFactory: { 
                  cost: 40, 
+                 costItems: { iron: 100, gear: 25, steel: 30, circuit: 10, motor: 3 }, // Special cost requiring multiple items
                  icon: '🤖', 
                  color: '#FF4500',
                  inputs: ['left', 'up', 'down'],
                  outputs: ['right'],
                  productionRate: 0.05,
+                 powerConsumption: 15, // Requires power
                  name: 'Robot Factory',
-                 description: 'Produces robots from computers and motors. Requires research level 7.'
+                 description: 'Produces robots from computers and motors. Requires research level 7. Requires 15 power. Costs 100 iron + 25 gears + 30 steel + 10 circuits + 3 motors.'
              },
              quantumLab: { 
                  cost: 50, 
+                 costItems: { iron: 200, gear: 50, steel: 50, circuit: 20, motor: 10, computer: 5 }, // Special cost requiring multiple items
                  icon: '⚛️', 
                  color: '#8A2BE2',
                  inputs: ['left', 'up', 'down', 'right'],
                  outputs: [],
                  productionRate: 0.01,
+                 powerConsumption: 20, // Requires power
                  name: 'Quantum Lab',
-                 description: 'Advanced research facility. Generates massive research points. Requires research level 8.'
+                 description: 'Advanced research facility. Generates massive research points. Requires research level 8. Requires 20 power. Costs 200 iron + 50 gears + 50 steel + 20 circuits + 10 motors + 5 computers.'
              },
              timeMachine: { 
                  cost: 100, 
+                 costItems: { iron: 500, gear: 100, steel: 100, circuit: 50, motor: 25, computer: 15, robot: 5 }, // Special cost requiring multiple items
                  icon: '⏰', 
                  color: '#FF1493',
                  inputs: ['left', 'up', 'down', 'right'],
                  outputs: [],
                  productionRate: 0.001,
+                 powerConsumption: 50, // Requires power
                  name: 'Time Machine',
-                 description: 'Ultimate building that generates all resources over time. Requires research level 8.'
+                 description: 'Ultimate building that generates all resources over time. Requires research level 8. Requires 50 power. Costs 500 iron + 100 gears + 100 steel + 50 circuits + 25 motors + 15 computers + 5 robots.'
+             },
+             // Power generation buildings
+             coalGenerator: {
+                 cost: 8,
+                 icon: '⚡',
+                 color: '#2F4F4F',
+                 inputs: ['left'],
+                 outputs: [],
+                 powerProduction: 10, // Generates 10 power per second
+                 fuelType: 'coal',
+                 fuelConsumption: 0.5, // Consumes 0.5 coal per second
+                 name: 'Coal Generator',
+                 description: 'Generates 10 power per second. Requires coal fuel input. Unlocked at research level 2.'
+             },
+             solarPanel: {
+                 cost: 12,
+                 icon: '☀️',
+                 color: '#FFD700',
+                 inputs: [],
+                 outputs: [],
+                 powerProduction: 5, // Generates 5 power per second
+                 name: 'Solar Panel',
+                 description: 'Generates 5 power per second from sunlight. No fuel required. Unlocked at research level 3.'
+             },
+             nuclearReactor: {
+                 cost: 50,
+                 icon: '☢️',
+                 color: '#00FF00',
+                 inputs: ['left'],
+                 outputs: [],
+                 powerProduction: 100, // Generates 100 power per second
+                 fuelType: 'uranium',
+                 fuelConsumption: 0.1, // Consumes 0.1 uranium per second
+                 name: 'Nuclear Reactor',
+                 description: 'Generates 100 power per second. Requires uranium fuel. Unlocked at research level 6.'
              }
         };
         
@@ -327,11 +410,11 @@ class FactoryGame {
              circuit: {
                  icon: '🔌',
                  name: 'Circuit',
-                 description: 'Electronic component made from copper and steel',
+                 description: 'Electronic component made from gold and steel',
                  category: 'electronic',
                  makes: ['computer'],
                  uses: ['circuitFactory'],
-                 ingredients: ['copper', 'steel']
+                 ingredients: ['gold', 'steel']
              },
              motor: {
                  icon: '⚡',
@@ -359,6 +442,33 @@ class FactoryGame {
                  makes: [],
                  uses: ['robotFactory'],
                  ingredients: ['computer', 'motor']
+             },
+             coal: {
+                 icon: '🪨',
+                 name: 'Coal',
+                 description: 'Fossil fuel for power generation',
+                 category: 'fuel',
+                 makes: [],
+                 uses: ['coalGenerator'],
+                 ingredients: []
+             },
+             uranium: {
+                 icon: '☢️',
+                 name: 'Uranium',
+                 description: 'Radioactive fuel for nuclear power',
+                 category: 'fuel',
+                 makes: [],
+                 uses: ['nuclearReactor'],
+                 ingredients: []
+             },
+             gold: {
+                 icon: '🥇',
+                 name: 'Gold',
+                 description: 'Precious metal for electronics',
+                 category: 'raw',
+                 makes: ['circuit'],
+                 uses: ['goldMiner'],
+                 ingredients: []
              }
         };
         
@@ -642,7 +752,7 @@ class FactoryGame {
         } else if (this.tutorialActive) {
             this.handleTutorialClick(gridX, gridY);
         } else if (this.selectedBuilding) {
-            this.placeBuilding(gridX, gridY);
+            this.placeBuilding(gridX, gridY, this.selectedBuilding);
         } else {
             console.log(`Clicked at grid position: (${gridX}, ${gridY})`);
         }
@@ -682,47 +792,27 @@ class FactoryGame {
     
     canAfford(buildingType) {
         const building = this.buildingTypes[buildingType];
+        
+        // Handle special multi-resource costs
+        if (building.costItems) {
+            for (const [resource, amount] of Object.entries(building.costItems)) {
+                if ((this.resources[resource] || 0) < amount) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        
+        // Handle legacy single-resource costs
         if (buildingType === 'roller') {
             return this.resources.copper >= building.cost;
+        } else if (buildingType === 'goldMiner') {
+            return this.resources.iron >= building.cost;
         } else {
             return this.resources.iron >= building.cost;
         }
     }
     
-    placeBuilding(gridX, gridY) {
-        const key = `${gridX},${gridY}`;
-        
-        // Check if position is already occupied
-        if (this.buildings.has(key)) {
-            return;
-        }
-        
-        // Check if we can afford it
-        if (!this.canAfford(this.selectedBuilding)) {
-            return;
-        }
-        
-        // Place the building
-        this.buildings.set(key, {
-            type: this.selectedBuilding,
-            x: gridX,
-            y: gridY,
-            rotation: this.selectedBuildingRotation
-        });
-        
-        // Deduct cost
-        const building = this.buildingTypes[this.selectedBuilding];
-        if (this.selectedBuilding === 'roller') {
-            this.resources.copper -= building.cost;
-        } else {
-            this.resources.iron -= building.cost;
-        }
-        
-        // Update UI
-        this.updateResourceDisplay();
-        this.updateBuildingAvailability();
-        this.draw();
-    }
     
     drawBuildings() {
         this.buildings.forEach((building, key) => {
@@ -992,12 +1082,26 @@ class FactoryGame {
         document.getElementById('motorCount').textContent = this.resources.motor;
         document.getElementById('computerCount').textContent = this.resources.computer;
         document.getElementById('robotCount').textContent = this.resources.robot;
+        document.getElementById('powerCount').textContent = this.resources.power;
+        document.getElementById('coalCount').textContent = this.resources.coal;
+        document.getElementById('uraniumCount').textContent = this.resources.uranium;
+        document.getElementById('goldCount').textContent = this.resources.gold;
+        
+        // Update power display
+        document.getElementById('powerDisplay').textContent = 
+            `${this.powerGrid.totalProduction}/${this.powerGrid.totalConsumption}`;
+        
         this.updateBuildingAvailability();
         this.updateResearchGoal(); // Update progress bar when resources change
         
         // Update research modal if it's open
         if (document.getElementById('researchModal').style.display === 'flex') {
             this.populateResearchModal();
+        }
+        
+        // Update recipe book if it's open
+        if (document.getElementById('recipeBookModal').style.display === 'flex') {
+            this.populateRecipeBook();
         }
     }
     
@@ -1125,8 +1229,22 @@ class FactoryGame {
         
         if (building) {
             // Refund half the cost
-            const refund = Math.floor(this.buildingTypes[building.type].cost / 2);
-            this.resources.iron += refund;
+            const buildingType = this.buildingTypes[building.type];
+            if (buildingType.costItems) {
+                // Handle multi-resource refunds
+                for (const [resource, amount] of Object.entries(buildingType.costItems)) {
+                    const refund = Math.floor(amount / 2);
+                    this.resources[resource] += refund;
+                }
+            } else {
+                // Handle legacy single-resource refunds
+                const refund = Math.floor(buildingType.cost / 2);
+                if (building.type === 'roller') {
+                    this.resources.copper += refund;
+                } else {
+                    this.resources.iron += refund;
+                }
+            }
             
             // Remove building
             this.buildings.delete(key);
@@ -1214,9 +1332,23 @@ class FactoryGame {
     }
     
     updateBuildings(deltaTime) {
+        // Reset power grid calculations
+        this.powerGrid.totalProduction = 0;
+        this.powerGrid.totalConsumption = 0;
+        
         this.buildings.forEach((building, key) => {
             this.updateBuilding(building, deltaTime);
         });
+        
+        // Update power efficiency based on production vs consumption
+        if (this.powerGrid.totalConsumption > 0) {
+            this.powerGrid.efficiency = Math.min(1.0, this.powerGrid.totalProduction / this.powerGrid.totalConsumption);
+        } else {
+            this.powerGrid.efficiency = 1.0;
+        }
+        
+        // Update power resource
+        this.resources.power = Math.max(0, this.powerGrid.totalProduction - this.powerGrid.totalConsumption);
     }
     
     updateBuilding(building, deltaTime) {
@@ -1225,6 +1357,7 @@ class FactoryGame {
         switch (building.type) {
             case 'ironMiner':
             case 'copperMiner':
+            case 'goldMiner':
             case 'advancedMiner':
                 this.updateMiner(building, buildingType, deltaTime);
                 break;
@@ -1273,17 +1406,29 @@ class FactoryGame {
              case 'timeMachine':
                  this.updateTimeMachine(building, buildingType, deltaTime);
                  break;
+             case 'coalGenerator':
+             case 'solarPanel':
+             case 'nuclearReactor':
+                 this.updatePowerGenerator(building, buildingType, deltaTime);
+                 break;
         }
     }
     
     updateMiner(building, buildingType, deltaTime) {
+        // Add power consumption to grid
+        if (buildingType.powerConsumption) {
+            this.powerGrid.totalConsumption += buildingType.powerConsumption;
+        }
+        
         // Produce iron over time
         if (!building.lastProduction) {
             building.lastProduction = Date.now();
         }
         
+        // Apply power efficiency to production rate
+        const effectiveProductionRate = buildingType.productionRate * this.powerGrid.efficiency;
         const timeSinceLastProduction = (Date.now() - building.lastProduction) / 1000;
-        if (timeSinceLastProduction >= 1 / buildingType.productionRate) {
+        if (timeSinceLastProduction >= 1 / effectiveProductionRate) {
             // Get rotated output direction
             const rotatedOutputs = this.rotateDirections(buildingType.outputs, building.rotation);
             const outputPos = this.getOutputPosition(building, rotatedOutputs[0]);
@@ -1338,7 +1483,12 @@ class FactoryGame {
     }
     
     updateRoller(building, buildingType, deltaTime) {
-        // Process items in roller
+        // Add power consumption to grid
+        if (buildingType.powerConsumption) {
+            this.powerGrid.totalConsumption += buildingType.powerConsumption;
+        }
+        
+        // Process items in roller (only if we have enough power)
         const key = `${building.x},${building.y}`;
         const item = this.items.get(key);
         
@@ -1349,9 +1499,11 @@ class FactoryGame {
         }
         
         if (building.processing) {
+            // Apply power efficiency to processing speed
+            const effectiveProductionRate = buildingType.productionRate * this.powerGrid.efficiency;
             building.processingTime += deltaTime;
             
-            if (building.processingTime >= 1 / buildingType.productionRate) {
+            if (building.processingTime >= 1 / effectiveProductionRate) {
                 // Convert item to rod
                 let outputType;
                 if (building.processingItem === 'iron') {
@@ -1441,6 +1593,11 @@ class FactoryGame {
     }
     
     updateFurnace(building, buildingType, deltaTime) {
+        // Add power consumption to grid
+        if (buildingType.powerConsumption) {
+            this.powerGrid.totalConsumption += buildingType.powerConsumption;
+        }
+        
         // Process iron into steel
         const key = `${building.x},${building.y}`;
         const item = this.items.get(key);
@@ -1451,9 +1608,11 @@ class FactoryGame {
         }
         
         if (building.processing) {
+            // Apply power efficiency to processing speed
+            const effectiveProductionRate = buildingType.productionRate * this.powerGrid.efficiency;
             building.processingTime += deltaTime;
             
-            if (building.processingTime >= 1 / buildingType.productionRate) {
+            if (building.processingTime >= 1 / effectiveProductionRate) {
                 // Get rotated output direction
                 const rotatedOutputs = this.rotateDirections(buildingType.outputs, building.rotation);
                 const outputPos = this.getOutputPosition(building, rotatedOutputs[0]);
@@ -1482,6 +1641,11 @@ class FactoryGame {
     }
     
     updateAssembler(building, buildingType, deltaTime) {
+        // Add power consumption to grid
+        if (buildingType.powerConsumption) {
+            this.powerGrid.totalConsumption += buildingType.powerConsumption;
+        }
+        
         // Process iron rods and copper rods into gears
         const key = `${building.x},${building.y}`;
         const item = this.items.get(key);
@@ -1496,9 +1660,11 @@ class FactoryGame {
         }
         
         if (building.processing) {
+            // Apply power efficiency to processing speed
+            const effectiveProductionRate = buildingType.productionRate * this.powerGrid.efficiency;
             building.processingTime += deltaTime;
             
-            if (building.processingTime >= 1 / buildingType.productionRate) {
+            if (building.processingTime >= 1 / effectiveProductionRate) {
                 // Get rotated output direction
                 const rotatedOutputs = this.rotateDirections(buildingType.outputs, building.rotation);
                 const outputPos = this.getOutputPosition(building, rotatedOutputs[0]);
@@ -1589,6 +1755,11 @@ class FactoryGame {
     }
     
     updateSplitter(building, buildingType, deltaTime) {
+        // Add power consumption to grid
+        if (buildingType.powerConsumption) {
+            this.powerGrid.totalConsumption += buildingType.powerConsumption;
+        }
+        
         // Split items to multiple outputs
         const key = `${building.x},${building.y}`;
         const item = this.items.get(key);
@@ -1621,6 +1792,11 @@ class FactoryGame {
     }
     
     updateFactory(building, buildingType, deltaTime) {
+        // Add power consumption to grid
+        if (buildingType.powerConsumption) {
+            this.powerGrid.totalConsumption += buildingType.powerConsumption;
+        }
+        
         // Advanced factory processing
         const key = `${building.x},${building.y}`;
         const item = this.items.get(key);
@@ -1632,9 +1808,11 @@ class FactoryGame {
         }
         
         if (building.processing) {
+            // Apply power efficiency to processing speed
+            const effectiveProductionRate = buildingType.productionRate * this.powerGrid.efficiency;
             building.processingTime += deltaTime;
             
-            if (building.processingTime >= 1 / buildingType.productionRate) {
+            if (building.processingTime >= 1 / effectiveProductionRate) {
                 // Get rotated output direction
                 const rotatedOutputs = this.rotateDirections(buildingType.outputs, building.rotation);
                 const outputPos = this.getOutputPosition(building, rotatedOutputs[0]);
@@ -1661,13 +1839,20 @@ class FactoryGame {
     }
     
     updateLab(building, buildingType, deltaTime) {
+        // Add power consumption to grid
+        if (buildingType.powerConsumption) {
+            this.powerGrid.totalConsumption += buildingType.powerConsumption;
+        }
+        
         // Generate research points
         if (!building.lastResearch) {
             building.lastResearch = Date.now();
         }
         
+        // Apply power efficiency to production rate
+        const effectiveProductionRate = buildingType.productionRate * this.powerGrid.efficiency;
         const timeSinceLastResearch = (Date.now() - building.lastResearch) / 1000;
-        if (timeSinceLastResearch >= 1 / buildingType.productionRate) {
+        if (timeSinceLastResearch >= 1 / effectiveProductionRate) {
             this.researchProgress += 1;
             building.lastResearch = Date.now();
             
@@ -1770,23 +1955,30 @@ class FactoryGame {
     }
     
     updateCircuitFactory(building, buildingType, deltaTime) {
+        // Add power consumption to grid
+        if (buildingType.powerConsumption) {
+            this.powerGrid.totalConsumption += buildingType.powerConsumption;
+        }
+        
         // Process copper and steel into circuits
         const key = `${building.x},${building.y}`;
         const item = this.items.get(key);
         
         // Check if we have both required items
-        const hasCopper = item && item.type === 'copper';
+        const hasGold = item && item.type === 'gold';
         const hasSteel = this.checkInputItems(building, 'steel');
         
-        if (hasCopper && hasSteel && !building.processing) {
+        if (hasGold && hasSteel && !building.processing) {
             building.processing = true;
             building.processingTime = 0;
         }
         
         if (building.processing) {
+            // Apply power efficiency to processing speed
+            const effectiveProductionRate = buildingType.productionRate * this.powerGrid.efficiency;
             building.processingTime += deltaTime;
             
-            if (building.processingTime >= 1 / buildingType.productionRate) {
+            if (building.processingTime >= 1 / effectiveProductionRate) {
                 // Get rotated output direction
                 const rotatedOutputs = this.rotateDirections(buildingType.outputs, building.rotation);
                 const outputPos = this.getOutputPosition(building, rotatedOutputs[0]);
@@ -1816,6 +2008,11 @@ class FactoryGame {
     }
     
     updateMotorFactory(building, buildingType, deltaTime) {
+        // Add power consumption to grid
+        if (buildingType.powerConsumption) {
+            this.powerGrid.totalConsumption += buildingType.powerConsumption;
+        }
+        
         // Process steel and gears into motors
         const key = `${building.x},${building.y}`;
         const item = this.items.get(key);
@@ -1830,9 +2027,11 @@ class FactoryGame {
         }
         
         if (building.processing) {
+            // Apply power efficiency to processing speed
+            const effectiveProductionRate = buildingType.productionRate * this.powerGrid.efficiency;
             building.processingTime += deltaTime;
             
-            if (building.processingTime >= 1 / buildingType.productionRate) {
+            if (building.processingTime >= 1 / effectiveProductionRate) {
                 // Get rotated output direction
                 const rotatedOutputs = this.rotateDirections(buildingType.outputs, building.rotation);
                 const outputPos = this.getOutputPosition(building, rotatedOutputs[0]);
@@ -1862,6 +2061,11 @@ class FactoryGame {
     }
     
     updateComputerFactory(building, buildingType, deltaTime) {
+        // Add power consumption to grid
+        if (buildingType.powerConsumption) {
+            this.powerGrid.totalConsumption += buildingType.powerConsumption;
+        }
+        
         // Process circuits and motors into computers
         const key = `${building.x},${building.y}`;
         const item = this.items.get(key);
@@ -1876,9 +2080,11 @@ class FactoryGame {
         }
         
         if (building.processing) {
+            // Apply power efficiency to processing speed
+            const effectiveProductionRate = buildingType.productionRate * this.powerGrid.efficiency;
             building.processingTime += deltaTime;
             
-            if (building.processingTime >= 1 / buildingType.productionRate) {
+            if (building.processingTime >= 1 / effectiveProductionRate) {
                 // Get rotated output direction
                 const rotatedOutputs = this.rotateDirections(buildingType.outputs, building.rotation);
                 const outputPos = this.getOutputPosition(building, rotatedOutputs[0]);
@@ -1908,6 +2114,11 @@ class FactoryGame {
     }
     
     updateRobotFactory(building, buildingType, deltaTime) {
+        // Add power consumption to grid
+        if (buildingType.powerConsumption) {
+            this.powerGrid.totalConsumption += buildingType.powerConsumption;
+        }
+        
         // Process computers and motors into robots
         const key = `${building.x},${building.y}`;
         const item = this.items.get(key);
@@ -1922,9 +2133,11 @@ class FactoryGame {
         }
         
         if (building.processing) {
+            // Apply power efficiency to processing speed
+            const effectiveProductionRate = buildingType.productionRate * this.powerGrid.efficiency;
             building.processingTime += deltaTime;
             
-            if (building.processingTime >= 1 / buildingType.productionRate) {
+            if (building.processingTime >= 1 / effectiveProductionRate) {
                 // Get rotated output direction
                 const rotatedOutputs = this.rotateDirections(buildingType.outputs, building.rotation);
                 const outputPos = this.getOutputPosition(building, rotatedOutputs[0]);
@@ -1954,13 +2167,20 @@ class FactoryGame {
     }
     
     updateQuantumLab(building, buildingType, deltaTime) {
+        // Add power consumption to grid
+        if (buildingType.powerConsumption) {
+            this.powerGrid.totalConsumption += buildingType.powerConsumption;
+        }
+        
         // Generate massive research points
         if (!building.lastResearch) {
             building.lastResearch = Date.now();
         }
         
+        // Apply power efficiency to production rate
+        const effectiveProductionRate = buildingType.productionRate * this.powerGrid.efficiency;
         const timeSinceLastResearch = (Date.now() - building.lastResearch) / 1000;
-        if (timeSinceLastResearch >= 1 / buildingType.productionRate) {
+        if (timeSinceLastResearch >= 1 / effectiveProductionRate) {
             this.researchProgress += 10; // Much faster research
             building.lastResearch = Date.now();
             
@@ -1970,13 +2190,20 @@ class FactoryGame {
     }
     
     updateTimeMachine(building, buildingType, deltaTime) {
+        // Add power consumption to grid
+        if (buildingType.powerConsumption) {
+            this.powerGrid.totalConsumption += buildingType.powerConsumption;
+        }
+        
         // Generate all resources over time
         if (!building.lastProduction) {
             building.lastProduction = Date.now();
         }
         
+        // Apply power efficiency to production rate
+        const effectiveProductionRate = buildingType.productionRate * this.powerGrid.efficiency;
         const timeSinceLastProduction = (Date.now() - building.lastProduction) / 1000;
-        if (timeSinceLastProduction >= 1 / buildingType.productionRate) {
+        if (timeSinceLastProduction >= 1 / effectiveProductionRate) {
             // Generate small amounts of all resources
             this.resources.iron += 1;
             this.resources.copper += 1;
@@ -1991,6 +2218,34 @@ class FactoryGame {
             
             building.lastProduction = Date.now();
             this.updateResourceDisplay();
+        }
+    }
+    
+    updatePowerGenerator(building, buildingType, deltaTime) {
+        // Add power consumption to grid
+        if (buildingType.powerConsumption) {
+            this.powerGrid.totalConsumption += buildingType.powerConsumption;
+        }
+        
+        // Generate power if it's a power generator
+        if (buildingType.powerProduction) {
+            let canGenerate = true;
+            
+            // Check fuel requirements
+            if (buildingType.fuelType && buildingType.fuelConsumption) {
+                const fuelAmount = this.resources[buildingType.fuelType] || 0;
+                if (fuelAmount < buildingType.fuelConsumption * deltaTime) {
+                    canGenerate = false;
+                } else {
+                    // Consume fuel
+                    this.resources[buildingType.fuelType] -= buildingType.fuelConsumption * deltaTime;
+                }
+            }
+            
+            if (canGenerate) {
+                this.powerGrid.totalProduction += buildingType.powerProduction;
+                building.lastProduction = Date.now();
+            }
         }
     }
     
@@ -2750,10 +3005,19 @@ class FactoryGame {
         });
         
         // Deduct cost
-        if (type === 'roller') {
-            this.resources.copper -= this.buildingTypes[type].cost;
+        const building = this.buildingTypes[type];
+        if (building.costItems) {
+            // Handle multi-resource costs
+            for (const [resource, amount] of Object.entries(building.costItems)) {
+                this.resources[resource] -= amount;
+            }
         } else {
-            this.resources.iron -= this.buildingTypes[type].cost;
+            // Handle legacy single-resource costs
+            if (type === 'roller') {
+                this.resources.copper -= building.cost;
+            } else {
+                this.resources.iron -= building.cost;
+            }
         }
         
         // Clear selection
