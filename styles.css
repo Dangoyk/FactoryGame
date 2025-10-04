@@ -406,59 +406,85 @@ body {
     border-color: #4CAF50;
 }
 
-.recipe-list {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+.materials-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
 }
 
-.recipe-item {
+.material-item {
     background-color: #333;
     border: 2px solid #555;
     border-radius: 8px;
-    padding: 15px;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
     transition: all 0.2s;
 }
 
-.recipe-item.discovered {
+.material-item:hover {
+    background-color: #444;
+    border-color: #666;
+}
+
+.material-item.discovered {
     border-color: #4CAF50;
 }
 
-.recipe-item.undiscovered {
-    opacity: 0.5;
+.material-item.undiscovered {
+    opacity: 0.3;
     border-color: #333;
 }
 
-.recipe-header {
+.material-icon {
+    font-size: 32px;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.material-name {
+    font-size: 12px;
+    font-weight: bold;
+    color: #fff;
+}
+
+.recipe-details {
+    background-color: #2a2a2a;
+    border: 2px solid #4CAF50;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.recipe-details h3 {
+    color: #4CAF50;
+    margin-bottom: 15px;
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 10px;
 }
 
-.recipe-icon {
+.recipe-details h3 .material-icon {
     font-size: 24px;
-}
-
-.recipe-name {
-    font-weight: bold;
-    font-size: 18px;
+    margin: 0;
 }
 
 .recipe-description {
-    color: #aaa;
-    margin-bottom: 10px;
+    color: #ccc;
+    margin-bottom: 15px;
     font-size: 14px;
+    line-height: 1.4;
 }
 
-.recipe-makes, .recipe-uses {
-    margin-bottom: 10px;
+.recipe-section {
+    margin-bottom: 15px;
 }
 
-.recipe-makes h4, .recipe-uses h4 {
+.recipe-section h4 {
     color: #4CAF50;
-    font-size: 12px;
-    margin: 0 0 5px 0;
+    font-size: 14px;
+    margin: 0 0 8px 0;
 }
 
 .recipe-ingredients {
@@ -469,10 +495,17 @@ body {
 
 .ingredient {
     background-color: #555;
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
     color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.ingredient .ingredient-icon {
+    font-size: 14px;
 }
 
 /* Research Styles */

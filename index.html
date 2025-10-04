@@ -51,10 +51,26 @@
             <span class="resource-icon">🔥</span>
             <span class="resource-amount" id="steelCount">0</span>
         </div>
-        <div class="resource-item">
-            <span class="resource-icon">⚙️</span>
-            <span class="resource-amount" id="gearCount">0</span>
-        </div>
+            <div class="resource-item">
+                <span class="resource-icon">⚙️</span>
+                <span class="resource-amount" id="gearCount">0</span>
+            </div>
+            <div class="resource-item">
+                <span class="resource-icon">🔌</span>
+                <span class="resource-amount" id="circuitCount">0</span>
+            </div>
+            <div class="resource-item">
+                <span class="resource-icon">⚡</span>
+                <span class="resource-amount" id="motorCount">0</span>
+            </div>
+            <div class="resource-item">
+                <span class="resource-icon">💻</span>
+                <span class="resource-amount" id="computerCount">0</span>
+            </div>
+            <div class="resource-item">
+                <span class="resource-icon">🤖</span>
+                <span class="resource-amount" id="robotCount">0</span>
+            </div>
     </div>
     
     <!-- Main Game Container -->
@@ -143,6 +159,55 @@
                         <div class="building-cost">❓</div>
                     </div>
                 </div>
+                
+                <div class="building-item" data-building="circuitFactory">
+                    <div class="building-icon">❓</div>
+                    <div class="building-info">
+                        <div class="building-name">❓</div>
+                        <div class="building-cost">❓</div>
+                    </div>
+                </div>
+                
+                <div class="building-item" data-building="motorFactory">
+                    <div class="building-icon">❓</div>
+                    <div class="building-info">
+                        <div class="building-name">❓</div>
+                        <div class="building-cost">❓</div>
+                    </div>
+                </div>
+                
+                <div class="building-item" data-building="computerFactory">
+                    <div class="building-icon">❓</div>
+                    <div class="building-info">
+                        <div class="building-name">❓</div>
+                        <div class="building-cost">❓</div>
+                    </div>
+                </div>
+                
+                <div class="building-item" data-building="robotFactory">
+                    <div class="building-icon">❓</div>
+                    <div class="building-info">
+                        <div class="building-name">❓</div>
+                        <div class="building-cost">❓</div>
+                    </div>
+                </div>
+                
+                <div class="building-item" data-building="quantumLab">
+                    <div class="building-icon">❓</div>
+                    <div class="building-info">
+                        <div class="building-name">❓</div>
+                        <div class="building-cost">❓</div>
+                    </div>
+                </div>
+                
+                <div class="building-item" data-building="timeMachine">
+                    <div class="building-icon">❓</div>
+                    <div class="building-info">
+                        <div class="building-name">❓</div>
+                        <div class="building-cost">❓</div>
+                    </div>
+                </div>
+                
                 <div class="building-item" data-building="submitter">
                     <div class="building-icon">📤</div>
                     <div class="building-info">
@@ -182,9 +247,16 @@
                     <button class="category-btn" data-category="raw">Raw Materials</button>
                     <button class="category-btn" data-category="processed">Processed</button>
                     <button class="category-btn" data-category="advanced">Advanced</button>
+                    <button class="category-btn" data-category="electronic">Electronic</button>
+                    <button class="category-btn" data-category="mechanical">Mechanical</button>
+                    <button class="category-btn" data-category="ultimate">Ultimate</button>
                 </div>
-                <div class="recipe-list" id="recipeList">
-                    <!-- Recipes will be populated by JavaScript -->
+                <div class="materials-list" id="materialsList">
+                    <!-- Materials will be populated by JavaScript -->
+                </div>
+                <div class="recipe-details" id="recipeDetails" style="display: none;">
+                    <h3 id="selectedMaterialName"></h3>
+                    <div id="selectedMaterialInfo"></div>
                 </div>
             </div>
         </div>

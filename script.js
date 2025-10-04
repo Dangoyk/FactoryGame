@@ -29,7 +29,11 @@ class FactoryGame {
             ironRod: 0,
             copperRod: 0,
             steel: 0,
-            gear: 0
+            gear: 0,
+            circuit: 0,
+            motor: 0,
+            computer: 0,
+            robot: 0
         };
         
         // Discovery system
@@ -43,7 +47,10 @@ class FactoryGame {
             2: { items: { copper: 5, ironRod: 3 }, unlocks: ['furnace', 'storage'] },
             3: { items: { steel: 2, copperRod: 2 }, unlocks: ['assembler'] },
             4: { items: { gear: 1, steel: 5 }, unlocks: ['advancedMiner', 'splitter'] },
-            5: { items: { gear: 3, steel: 10 }, unlocks: ['factory', 'lab'] }
+            5: { items: { gear: 3, steel: 10 }, unlocks: ['factory', 'lab'] },
+            6: { items: { circuit: 2, motor: 1 }, unlocks: ['circuitFactory', 'motorFactory'] },
+            7: { items: { computer: 1, robot: 1 }, unlocks: ['computerFactory', 'robotFactory'] },
+            8: { items: { robot: 5, computer: 3 }, unlocks: ['quantumLab', 'timeMachine'] }
         };
         
         // Building system
@@ -164,15 +171,75 @@ class FactoryGame {
                 name: 'Research Lab',
                 description: 'Generates research points for unlocking new technologies. Requires research level 5.'
             },
-            submitter: { 
-                cost: 2, 
-                icon: '📤', 
-                color: '#4CAF50',
-                inputs: ['left', 'up', 'down', 'right'],
-                outputs: [],
-                name: 'Resource Submitter',
-                description: 'Collects items from all directions and converts them back to resources. Accepts inputs from all sides.'
-            }
+             submitter: { 
+                 cost: 2, 
+                 icon: '📤', 
+                 color: '#4CAF50',
+                 inputs: ['left', 'up', 'down', 'right'],
+                 outputs: [],
+                 name: 'Resource Submitter',
+                 description: 'Collects items from all directions and converts them back to resources. Accepts inputs from all sides.'
+             },
+             circuitFactory: { 
+                 cost: 12, 
+                 icon: '🔌', 
+                 color: '#FF69B4',
+                 inputs: ['left', 'up'],
+                 outputs: ['right'],
+                 productionRate: 0.3,
+                 name: 'Circuit Factory',
+                 description: 'Produces circuits from copper and steel. Requires research level 6.'
+             },
+             motorFactory: { 
+                 cost: 15, 
+                 icon: '⚡', 
+                 color: '#FFD700',
+                 inputs: ['left', 'up'],
+                 outputs: ['right'],
+                 productionRate: 0.2,
+                 name: 'Motor Factory',
+                 description: 'Produces motors from steel and gears. Requires research level 6.'
+             },
+             computerFactory: { 
+                 cost: 30, 
+                 icon: '💻', 
+                 color: '#00BFFF',
+                 inputs: ['left', 'up', 'down'],
+                 outputs: ['right'],
+                 productionRate: 0.1,
+                 name: 'Computer Factory',
+                 description: 'Produces computers from circuits and motors. Requires research level 7.'
+             },
+             robotFactory: { 
+                 cost: 40, 
+                 icon: '🤖', 
+                 color: '#FF4500',
+                 inputs: ['left', 'up', 'down'],
+                 outputs: ['right'],
+                 productionRate: 0.05,
+                 name: 'Robot Factory',
+                 description: 'Produces robots from computers and motors. Requires research level 7.'
+             },
+             quantumLab: { 
+                 cost: 50, 
+                 icon: '⚛️', 
+                 color: '#8A2BE2',
+                 inputs: ['left', 'up', 'down', 'right'],
+                 outputs: [],
+                 productionRate: 0.01,
+                 name: 'Quantum Lab',
+                 description: 'Advanced research facility. Generates massive research points. Requires research level 8.'
+             },
+             timeMachine: { 
+                 cost: 100, 
+                 icon: '⏰', 
+                 color: '#FF1493',
+                 inputs: ['left', 'up', 'down', 'right'],
+                 outputs: [],
+                 productionRate: 0.001,
+                 name: 'Time Machine',
+                 description: 'Ultimate building that generates all resources over time. Requires research level 8.'
+             }
         };
         
         // Game loop for building functionality
@@ -237,15 +304,51 @@ class FactoryGame {
                 uses: ['furnace'],
                 ingredients: ['iron']
             },
-            gear: {
-                icon: '⚙️',
-                name: 'Gear',
-                description: 'Mechanical component made from rods',
-                category: 'advanced',
-                makes: [],
-                uses: ['assembler'],
-                ingredients: ['ironRod', 'copperRod']
-            }
+             gear: {
+                 icon: '⚙️',
+                 name: 'Gear',
+                 description: 'Mechanical component made from rods',
+                 category: 'advanced',
+                 makes: ['motor'],
+                 uses: ['assembler'],
+                 ingredients: ['ironRod', 'copperRod']
+             },
+             circuit: {
+                 icon: '🔌',
+                 name: 'Circuit',
+                 description: 'Electronic component made from copper and steel',
+                 category: 'electronic',
+                 makes: ['computer'],
+                 uses: ['circuitFactory'],
+                 ingredients: ['copper', 'steel']
+             },
+             motor: {
+                 icon: '⚡',
+                 name: 'Motor',
+                 description: 'Mechanical device that converts energy into motion',
+                 category: 'mechanical',
+                 makes: ['computer', 'robot'],
+                 uses: ['motorFactory'],
+                 ingredients: ['steel', 'gear']
+             },
+             computer: {
+                 icon: '💻',
+                 name: 'Computer',
+                 description: 'Advanced computing device',
+                 category: 'electronic',
+                 makes: ['robot'],
+                 uses: ['computerFactory'],
+                 ingredients: ['circuit', 'motor']
+             },
+             robot: {
+                 icon: '🤖',
+                 name: 'Robot',
+                 description: 'Autonomous mechanical being',
+                 category: 'ultimate',
+                 makes: [],
+                 uses: ['robotFactory'],
+                 ingredients: ['computer', 'motor']
+             }
         };
         
         this.init();
@@ -815,7 +918,12 @@ class FactoryGame {
         document.getElementById('copperRodCount').textContent = this.resources.copperRod;
         document.getElementById('steelCount').textContent = this.resources.steel;
         document.getElementById('gearCount').textContent = this.resources.gear;
+        document.getElementById('circuitCount').textContent = this.resources.circuit;
+        document.getElementById('motorCount').textContent = this.resources.motor;
+        document.getElementById('computerCount').textContent = this.resources.computer;
+        document.getElementById('robotCount').textContent = this.resources.robot;
         this.updateBuildingAvailability();
+        this.updateResearchGoal(); // Update progress bar when resources change
     }
     
     updateBuildingAvailability() {
@@ -1036,9 +1144,27 @@ class FactoryGame {
             case 'storage':
                 this.updateStorageBuilding(building, buildingType, deltaTime);
                 break;
-            case 'submitter':
-                this.updateSubmitter(building, buildingType, deltaTime);
-                break;
+             case 'submitter':
+                 this.updateSubmitter(building, buildingType, deltaTime);
+                 break;
+             case 'circuitFactory':
+                 this.updateCircuitFactory(building, buildingType, deltaTime);
+                 break;
+             case 'motorFactory':
+                 this.updateMotorFactory(building, buildingType, deltaTime);
+                 break;
+             case 'computerFactory':
+                 this.updateComputerFactory(building, buildingType, deltaTime);
+                 break;
+             case 'robotFactory':
+                 this.updateRobotFactory(building, buildingType, deltaTime);
+                 break;
+             case 'quantumLab':
+                 this.updateQuantumLab(building, buildingType, deltaTime);
+                 break;
+             case 'timeMachine':
+                 this.updateTimeMachine(building, buildingType, deltaTime);
+                 break;
         }
     }
     
@@ -1495,6 +1621,231 @@ class FactoryGame {
         }
     }
     
+    updateCircuitFactory(building, buildingType, deltaTime) {
+        // Process copper and steel into circuits
+        const key = `${building.x},${building.y}`;
+        const item = this.items.get(key);
+        
+        // Check if we have both required items
+        const hasCopper = item && item.type === 'copper';
+        const hasSteel = this.checkInputItems(building, 'steel');
+        
+        if (hasCopper && hasSteel && !building.processing) {
+            building.processing = true;
+            building.processingTime = 0;
+        }
+        
+        if (building.processing) {
+            building.processingTime += deltaTime;
+            
+            if (building.processingTime >= 1 / buildingType.productionRate) {
+                // Get rotated output direction
+                const rotatedOutputs = this.rotateDirections(buildingType.outputs, building.rotation);
+                const outputPos = this.getOutputPosition(building, rotatedOutputs[0]);
+                
+                if (outputPos && !this.items.has(`${outputPos.x},${outputPos.y}`) && 
+                    !this.isStorageFull(outputPos.x, outputPos.y)) {
+                    // Create circuit item
+                    this.items.set(`${outputPos.x},${outputPos.y}`, {
+                        type: 'circuit',
+                        x: outputPos.x,
+                        y: outputPos.y,
+                        progress: 0
+                    });
+                    
+                    // Remove input items
+                    this.items.delete(key);
+                    this.removeInputItem(building, 'steel');
+                    
+                    // Discover circuit
+                    this.discoverItem('circuit');
+                }
+                
+                building.processing = false;
+                building.processingTime = 0;
+            }
+        }
+    }
+    
+    updateMotorFactory(building, buildingType, deltaTime) {
+        // Process steel and gears into motors
+        const key = `${building.x},${building.y}`;
+        const item = this.items.get(key);
+        
+        // Check if we have both required items
+        const hasSteel = item && item.type === 'steel';
+        const hasGear = this.checkInputItems(building, 'gear');
+        
+        if (hasSteel && hasGear && !building.processing) {
+            building.processing = true;
+            building.processingTime = 0;
+        }
+        
+        if (building.processing) {
+            building.processingTime += deltaTime;
+            
+            if (building.processingTime >= 1 / buildingType.productionRate) {
+                // Get rotated output direction
+                const rotatedOutputs = this.rotateDirections(buildingType.outputs, building.rotation);
+                const outputPos = this.getOutputPosition(building, rotatedOutputs[0]);
+                
+                if (outputPos && !this.items.has(`${outputPos.x},${outputPos.y}`) && 
+                    !this.isStorageFull(outputPos.x, outputPos.y)) {
+                    // Create motor item
+                    this.items.set(`${outputPos.x},${outputPos.y}`, {
+                        type: 'motor',
+                        x: outputPos.x,
+                        y: outputPos.y,
+                        progress: 0
+                    });
+                    
+                    // Remove input items
+                    this.items.delete(key);
+                    this.removeInputItem(building, 'gear');
+                    
+                    // Discover motor
+                    this.discoverItem('motor');
+                }
+                
+                building.processing = false;
+                building.processingTime = 0;
+            }
+        }
+    }
+    
+    updateComputerFactory(building, buildingType, deltaTime) {
+        // Process circuits and motors into computers
+        const key = `${building.x},${building.y}`;
+        const item = this.items.get(key);
+        
+        // Check if we have both required items
+        const hasCircuit = item && item.type === 'circuit';
+        const hasMotor = this.checkInputItems(building, 'motor');
+        
+        if (hasCircuit && hasMotor && !building.processing) {
+            building.processing = true;
+            building.processingTime = 0;
+        }
+        
+        if (building.processing) {
+            building.processingTime += deltaTime;
+            
+            if (building.processingTime >= 1 / buildingType.productionRate) {
+                // Get rotated output direction
+                const rotatedOutputs = this.rotateDirections(buildingType.outputs, building.rotation);
+                const outputPos = this.getOutputPosition(building, rotatedOutputs[0]);
+                
+                if (outputPos && !this.items.has(`${outputPos.x},${outputPos.y}`) && 
+                    !this.isStorageFull(outputPos.x, outputPos.y)) {
+                    // Create computer item
+                    this.items.set(`${outputPos.x},${outputPos.y}`, {
+                        type: 'computer',
+                        x: outputPos.x,
+                        y: outputPos.y,
+                        progress: 0
+                    });
+                    
+                    // Remove input items
+                    this.items.delete(key);
+                    this.removeInputItem(building, 'motor');
+                    
+                    // Discover computer
+                    this.discoverItem('computer');
+                }
+                
+                building.processing = false;
+                building.processingTime = 0;
+            }
+        }
+    }
+    
+    updateRobotFactory(building, buildingType, deltaTime) {
+        // Process computers and motors into robots
+        const key = `${building.x},${building.y}`;
+        const item = this.items.get(key);
+        
+        // Check if we have both required items
+        const hasComputer = item && item.type === 'computer';
+        const hasMotor = this.checkInputItems(building, 'motor');
+        
+        if (hasComputer && hasMotor && !building.processing) {
+            building.processing = true;
+            building.processingTime = 0;
+        }
+        
+        if (building.processing) {
+            building.processingTime += deltaTime;
+            
+            if (building.processingTime >= 1 / buildingType.productionRate) {
+                // Get rotated output direction
+                const rotatedOutputs = this.rotateDirections(buildingType.outputs, building.rotation);
+                const outputPos = this.getOutputPosition(building, rotatedOutputs[0]);
+                
+                if (outputPos && !this.items.has(`${outputPos.x},${outputPos.y}`) && 
+                    !this.isStorageFull(outputPos.x, outputPos.y)) {
+                    // Create robot item
+                    this.items.set(`${outputPos.x},${outputPos.y}`, {
+                        type: 'robot',
+                        x: outputPos.x,
+                        y: outputPos.y,
+                        progress: 0
+                    });
+                    
+                    // Remove input items
+                    this.items.delete(key);
+                    this.removeInputItem(building, 'motor');
+                    
+                    // Discover robot
+                    this.discoverItem('robot');
+                }
+                
+                building.processing = false;
+                building.processingTime = 0;
+            }
+        }
+    }
+    
+    updateQuantumLab(building, buildingType, deltaTime) {
+        // Generate massive research points
+        if (!building.lastResearch) {
+            building.lastResearch = Date.now();
+        }
+        
+        const timeSinceLastResearch = (Date.now() - building.lastResearch) / 1000;
+        if (timeSinceLastResearch >= 1 / buildingType.productionRate) {
+            this.researchProgress += 10; // Much faster research
+            building.lastResearch = Date.now();
+            
+            // Check if we can advance research level
+            this.checkResearchAdvancement();
+        }
+    }
+    
+    updateTimeMachine(building, buildingType, deltaTime) {
+        // Generate all resources over time
+        if (!building.lastProduction) {
+            building.lastProduction = Date.now();
+        }
+        
+        const timeSinceLastProduction = (Date.now() - building.lastProduction) / 1000;
+        if (timeSinceLastProduction >= 1 / buildingType.productionRate) {
+            // Generate small amounts of all resources
+            this.resources.iron += 1;
+            this.resources.copper += 1;
+            this.resources.ironRod += 1;
+            this.resources.copperRod += 1;
+            this.resources.steel += 1;
+            this.resources.gear += 1;
+            this.resources.circuit += 1;
+            this.resources.motor += 1;
+            this.resources.computer += 1;
+            this.resources.robot += 1;
+            
+            building.lastProduction = Date.now();
+            this.updateResourceDisplay();
+        }
+    }
+    
     getOutputPosition(building, direction) {
         let newX = building.x;
         let newY = building.y;
@@ -1554,9 +1905,21 @@ class FactoryGame {
             case 'steel':
                 color = '#708090'; // Steel gray
                 break;
-            case 'gear':
-                color = '#2F4F4F'; // Dark slate gray
-                break;
+             case 'gear':
+                 color = '#2F4F4F'; // Dark slate gray
+                 break;
+             case 'circuit':
+                 color = '#FF69B4'; // Hot pink
+                 break;
+             case 'motor':
+                 color = '#FFD700'; // Gold
+                 break;
+             case 'computer':
+                 color = '#00BFFF'; // Deep sky blue
+                 break;
+             case 'robot':
+                 color = '#FF4500'; // Orange red
+                 break;
         }
         
         this.ctx.fillStyle = color;
@@ -1700,7 +2063,8 @@ class FactoryGame {
     openRecipeBook() {
         const modal = document.getElementById('recipeModal');
         modal.style.display = 'flex';
-        this.populateRecipeList('all');
+        this.populateMaterialsList('all');
+        this.hideRecipeDetails();
     }
     
     closeRecipeBook() {
@@ -1715,12 +2079,12 @@ class FactoryGame {
         });
         document.querySelector(`[data-category="${category}"]`).classList.add('active');
         
-        this.populateRecipeList(category);
+        this.populateMaterialsList(category);
     }
     
-    populateRecipeList(category) {
-        const recipeList = document.getElementById('recipeList');
-        recipeList.innerHTML = '';
+    populateMaterialsList(category) {
+        const materialsList = document.getElementById('materialsList');
+        materialsList.innerHTML = '';
         
         Object.entries(this.recipes).forEach(([itemType, recipe]) => {
             if (category !== 'all' && recipe.category !== category) {
@@ -1728,43 +2092,101 @@ class FactoryGame {
             }
             
             const isDiscovered = this.discoveredItems.has(itemType);
-            const recipeItem = document.createElement('div');
-            recipeItem.className = `recipe-item ${isDiscovered ? 'discovered' : 'undiscovered'}`;
+            const materialItem = document.createElement('div');
+            materialItem.className = `material-item ${isDiscovered ? 'discovered' : 'undiscovered'}`;
+            materialItem.dataset.material = itemType;
             
-            recipeItem.innerHTML = `
-                <div class="recipe-header">
-                    <span class="recipe-icon">${recipe.icon}</span>
-                    <span class="recipe-name">${recipe.name}</span>
-                </div>
-                <div class="recipe-description">${recipe.description}</div>
-                ${recipe.ingredients.length > 0 ? `
-                    <div class="recipe-makes">
-                        <h4>Made from:</h4>
-                        <div class="recipe-ingredients">
-                            ${recipe.ingredients.map(ing => `<span class="ingredient">${this.recipes[ing].icon} ${this.recipes[ing].name}</span>`).join('')}
-                        </div>
-                    </div>
-                ` : ''}
-                ${recipe.makes.length > 0 ? `
-                    <div class="recipe-uses">
-                        <h4>Used to make:</h4>
-                        <div class="recipe-ingredients">
-                            ${recipe.makes.map(make => `<span class="ingredient">${this.recipes[make].icon} ${this.recipes[make].name}</span>`).join('')}
-                        </div>
-                    </div>
-                ` : ''}
-                ${recipe.uses.length > 0 ? `
-                    <div class="recipe-uses">
-                        <h4>Made by:</h4>
-                        <div class="recipe-ingredients">
-                            ${recipe.uses.map(use => `<span class="ingredient">${this.buildingTypes[use].icon} ${this.buildingTypes[use].name}</span>`).join('')}
-                        </div>
-                    </div>
-                ` : ''}
+            materialItem.innerHTML = `
+                <span class="material-icon">${isDiscovered ? recipe.icon : '❓'}</span>
+                <span class="material-name">${isDiscovered ? recipe.name : '❓'}</span>
             `;
             
-            recipeList.appendChild(recipeItem);
+            // Add click event
+            materialItem.addEventListener('click', () => {
+                this.showRecipeDetails(itemType);
+            });
+            
+            materialsList.appendChild(materialItem);
         });
+    }
+    
+    showRecipeDetails(itemType) {
+        const recipe = this.recipes[itemType];
+        const isDiscovered = this.discoveredItems.has(itemType);
+        
+        document.getElementById('selectedMaterialName').innerHTML = `
+            <span class="material-icon">${isDiscovered ? recipe.icon : '❓'}</span>
+            ${isDiscovered ? recipe.name : '❓'}
+        `;
+        
+        let detailsHTML = '';
+        
+        if (isDiscovered) {
+            detailsHTML += `<div class="recipe-description">${recipe.description}</div>`;
+            
+            if (recipe.ingredients.length > 0) {
+                detailsHTML += `
+                    <div class="recipe-section">
+                        <h4>Made from:</h4>
+                        <div class="recipe-ingredients">
+                            ${recipe.ingredients.map(ing => {
+                                const ingRecipe = this.recipes[ing];
+                                const ingDiscovered = this.discoveredItems.has(ing);
+                                return `<span class="ingredient">
+                                    <span class="ingredient-icon">${ingDiscovered ? ingRecipe.icon : '❓'}</span>
+                                    ${ingDiscovered ? ingRecipe.name : '❓'}
+                                </span>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (recipe.makes.length > 0) {
+                detailsHTML += `
+                    <div class="recipe-section">
+                        <h4>Used to make:</h4>
+                        <div class="recipe-ingredients">
+                            ${recipe.makes.map(make => {
+                                const makeRecipe = this.recipes[make];
+                                const makeDiscovered = this.discoveredItems.has(make);
+                                return `<span class="ingredient">
+                                    <span class="ingredient-icon">${makeDiscovered ? makeRecipe.icon : '❓'}</span>
+                                    ${makeDiscovered ? makeRecipe.name : '❓'}
+                                </span>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (recipe.uses.length > 0) {
+                detailsHTML += `
+                    <div class="recipe-section">
+                        <h4>Made by:</h4>
+                        <div class="recipe-ingredients">
+                            ${recipe.uses.map(use => {
+                                const building = this.buildingTypes[use];
+                                const buildingUnlocked = this.isBuildingUnlocked(use);
+                                return `<span class="ingredient">
+                                    <span class="ingredient-icon">${buildingUnlocked ? building.icon : '❓'}</span>
+                                    ${buildingUnlocked ? building.name : '❓'}
+                                </span>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        } else {
+            detailsHTML = '<div class="recipe-description">This item has not been discovered yet. Keep researching to unlock it!</div>';
+        }
+        
+        document.getElementById('selectedMaterialInfo').innerHTML = detailsHTML;
+        document.getElementById('recipeDetails').style.display = 'block';
+    }
+    
+    hideRecipeDetails() {
+        document.getElementById('recipeDetails').style.display = 'none';
     }
     
     // Research modal system
@@ -1891,7 +2313,11 @@ class FactoryGame {
                 ironRod: 0,
                 copperRod: 0,
                 steel: 0,
-                gear: 0
+                gear: 0,
+                circuit: 0,
+                motor: 0,
+                computer: 0,
+                robot: 0
             };
             
             this.researchLevel = 0;
