@@ -2,9 +2,10 @@ class FactoryGame {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
-        this.sideMenu = document.getElementById('sideMenu');
+        this.buildingMenu = document.getElementById('buildingMenu');
         this.menuToggle = document.getElementById('menuToggle');
-        this.closeBtn = document.getElementById('closeBtn');
+        this.closeBtn = document.getElementById('closeBuildingMenu');
+        this.deleteOverlay = document.getElementById('deleteOverlay');
         
         // Grid settings
         this.gridSize = 40; // Size of each grid cell in pixels
@@ -12,7 +13,8 @@ class FactoryGame {
         this.backgroundColor = '#4a7c59';
         
         // Menu state
-        this.menuOpen = true;
+        this.menuOpen = false;
+        this.deleteMode = false;
         
         // Game state
         this.resources = {
@@ -250,8 +252,9 @@ class FactoryGame {
         
         // Initial menu state
         this.updateMenuState();
-        this.updateModeDisplay();
+        this.updateDeleteModeDisplay();
         this.updateBuildingAvailability();
+        this.updateResearchGoal();
         
         // Start game loop
         this.gameLoop();
@@ -266,6 +269,16 @@ class FactoryGame {
         // Close button
         this.closeBtn.addEventListener('click', () => {
             this.closeMenu();
+        });
+        
+        // Settings button
+        document.getElementById('settingsBtn').addEventListener('click', () => {
+            this.openSettingsModal();
+        });
+        
+        // Settings modal
+        document.getElementById('closeSettingsModal').addEventListener('click', () => {
+            this.closeSettingsModal();
         });
         
         // Window resize
@@ -337,6 +350,13 @@ class FactoryGame {
         // Keyboard controls
         document.addEventListener('keydown', (e) => {
             this.handleKeyPress(e);
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'Shift') {
+                this.deleteMode = false;
+                this.updateDeleteModeDisplay();
+            }
         });
         
         // Canvas right-click for building details
@@ -413,12 +433,11 @@ class FactoryGame {
     
     updateMenuState() {
         if (this.menuOpen) {
-            this.sideMenu.classList.remove('closed');
-            this.menuToggle.classList.add('hidden');
+            this.buildingMenu.classList.add('open');
+            this.menuToggle.querySelector('.arrow').textContent = '◀';
         } else {
-            this.sideMenu.classList.add('closed');
-            this.menuToggle.classList.remove('hidden');
-            this.menuToggle.classList.remove('rotated');
+            this.buildingMenu.classList.remove('open');
+            this.menuToggle.querySelector('.arrow').textContent = '🔨';
         }
     }
     
@@ -435,7 +454,8 @@ class FactoryGame {
         const gridX = Math.floor(worldX / this.gridSize);
         const gridY = Math.floor(worldY / this.gridSize);
         
-        if (this.deleteMode) {
+        // Check for shift+click (delete mode)
+        if (e.shiftKey) {
             this.deleteBuilding(gridX, gridY);
         } else if (this.selectedBuilding) {
             this.placeBuilding(gridX, gridY);
@@ -471,7 +491,7 @@ class FactoryGame {
             this.selectedBuildingRotation = 0; // Reset rotation when selecting new building
             this.deleteMode = false;
             this.updateBuildingSelection();
-            this.updateModeDisplay();
+            this.updateDeleteModeDisplay();
             this.draw();
         }
     }
@@ -771,10 +791,24 @@ class FactoryGame {
             const buildingType = item.dataset.building;
             const canAfford = this.canAfford(buildingType);
             const isUnlocked = this.isBuildingUnlocked(buildingType);
+            const building = this.buildingTypes[buildingType];
             
-            if (canAfford && isUnlocked) {
-                item.classList.remove('disabled');
+            if (isUnlocked) {
+                // Show actual building info
+                item.querySelector('.building-icon').textContent = building.icon;
+                item.querySelector('.building-name').textContent = building.name;
+                item.querySelector('.building-cost').textContent = `Cost: ${building.cost} ${buildingType === 'roller' ? 'Copper' : 'Iron'}`;
+                
+                if (canAfford) {
+                    item.classList.remove('disabled');
+                } else {
+                    item.classList.add('disabled');
+                }
             } else {
+                // Show question marks for undiscovered buildings
+                item.querySelector('.building-icon').textContent = '❓';
+                item.querySelector('.building-name').textContent = '❓';
+                item.querySelector('.building-cost').textContent = '❓';
                 item.classList.add('disabled');
             }
         });
@@ -806,11 +840,12 @@ class FactoryGame {
             this.selectedBuildingRotation = 0;
             this.deleteMode = false;
             this.updateBuildingSelection();
-            this.updateModeDisplay();
+            this.updateDeleteModeDisplay();
             this.canvas.style.cursor = 'crosshair';
             this.draw();
-        } else if (e.key === 'Delete' || e.key === 'Backspace') {
-            this.toggleDeleteMode();
+        } else if (e.key === 'Shift') {
+            this.deleteMode = true;
+            this.updateDeleteModeDisplay();
         } else if (e.key === 'r' || e.key === 'R') {
             this.rotateSelectedBuilding();
         } else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
@@ -832,7 +867,7 @@ class FactoryGame {
         this.deleteMode = !this.deleteMode;
         this.selectedBuilding = null;
         this.updateBuildingSelection();
-        this.updateModeDisplay();
+        this.updateDeleteModeDisplay();
         this.canvas.style.cursor = this.deleteMode ? 'not-allowed' : 'crosshair';
         this.draw();
     }
@@ -856,17 +891,29 @@ class FactoryGame {
         }
     }
     
-    updateModeDisplay() {
-        const buildMode = document.getElementById('buildMode');
-        const deleteMode = document.getElementById('deleteMode');
-        
-        buildMode.classList.remove('active');
-        deleteMode.classList.remove('delete-active');
-        
+    updateDeleteModeDisplay() {
         if (this.deleteMode) {
-            deleteMode.classList.add('delete-active');
+            this.deleteOverlay.classList.add('active');
+            this.canvas.style.cursor = 'not-allowed';
         } else {
-            buildMode.classList.add('active');
+            this.deleteOverlay.classList.remove('active');
+            this.canvas.style.cursor = 'crosshair';
+        }
+    }
+    
+    updateResearchGoal() {
+        const nextLevel = this.researchLevel + 1;
+        const requirements = this.researchRequirements[nextLevel];
+        const goalElement = document.getElementById('researchGoal');
+        
+        if (requirements) {
+            const requirementText = Object.entries(requirements.items)
+                .map(([itemType, amount]) => `${amount} ${this.recipes[itemType]?.name || itemType}`)
+                .join(', ');
+            goalElement.querySelector('.goal-text').textContent = 
+                `Research Level ${nextLevel}: Collect ${requirementText}`;
+        } else {
+            goalElement.querySelector('.goal-text').textContent = 'All research levels completed!';
         }
     }
     
@@ -1381,6 +1428,7 @@ class FactoryGame {
         // Update UI
         this.updateResourceDisplay();
         this.updateBuildingAvailability();
+        this.updateResearchGoal();
         
         console.log(`Research Level ${nextLevel} unlocked!`);
     }
@@ -1771,6 +1819,17 @@ class FactoryGame {
             
             researchLevels.appendChild(levelItem);
         }
+    }
+    
+    // Settings modal system
+    openSettingsModal() {
+        const modal = document.getElementById('settingsModal');
+        modal.style.display = 'flex';
+    }
+    
+    closeSettingsModal() {
+        const modal = document.getElementById('settingsModal');
+        modal.style.display = 'none';
     }
 }
 

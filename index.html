@@ -7,172 +7,155 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- Top UI Bar -->
+    <div class="top-bar">
+        <div class="research-goal" id="researchGoal">
+            <span class="goal-icon">🎯</span>
+            <span class="goal-text">Research Level 1: Collect 10 Iron</span>
+        </div>
+        <div class="top-right-controls">
+            <button class="top-btn" id="recipeBookBtn">📖</button>
+            <button class="top-btn" id="researchBtn">🔬</button>
+            <button class="top-btn" id="settingsBtn">⚙️</button>
+        </div>
+    </div>
+    
+    <!-- Resource Bar (Always Visible) -->
+    <div class="resource-bar">
+        <div class="resource-item">
+            <span class="resource-icon">⚡</span>
+            <span class="resource-amount" id="ironCount">8</span>
+        </div>
+        <div class="resource-item">
+            <span class="resource-icon">🟤</span>
+            <span class="resource-amount" id="copperCount">0</span>
+        </div>
+        <div class="resource-item">
+            <span class="resource-icon">🔩</span>
+            <span class="resource-amount" id="ironRodCount">0</span>
+        </div>
+        <div class="resource-item">
+            <span class="resource-icon">🔧</span>
+            <span class="resource-amount" id="copperRodCount">0</span>
+        </div>
+        <div class="resource-item">
+            <span class="resource-icon">🔥</span>
+            <span class="resource-amount" id="steelCount">0</span>
+        </div>
+        <div class="resource-item">
+            <span class="resource-icon">⚙️</span>
+            <span class="resource-amount" id="gearCount">0</span>
+        </div>
+    </div>
+    
+    <!-- Main Game Container -->
     <div class="game-container">
-        <div class="side-menu" id="sideMenu">
+        <!-- Building Menu -->
+        <div class="building-menu" id="buildingMenu">
             <div class="menu-header">
-                <h2>Factory Menu</h2>
-                <button class="close-btn" id="closeBtn">&times;</button>
+                <h3>Buildings</h3>
+                <button class="close-btn" id="closeBuildingMenu">&times;</button>
             </div>
             <div class="menu-content">
-                
-                <div class="building-menu">
-                    <h3>Buildings</h3>
-                    <div class="building-item" data-building="ironMiner">
-                        <div class="building-icon">⛏️</div>
-                        <div class="building-info">
-                            <div class="building-name">Iron Miner</div>
-                            <div class="building-cost">Cost: 5 Iron</div>
-                        </div>
-                    </div>
-                    <div class="building-item" data-building="copperMiner">
-                        <div class="building-icon">⛏️</div>
-                        <div class="building-info">
-                            <div class="building-name">Copper Miner</div>
-                            <div class="building-cost">Cost: 10 Iron</div>
-                        </div>
-                    </div>
-                    <div class="building-item" data-building="conveyor">
-                        <div class="building-icon">➡️</div>
-                        <div class="building-info">
-                            <div class="building-name">Conveyor Belt</div>
-                            <div class="building-cost">Cost: 1 Iron</div>
-                        </div>
-                    </div>
-                    <div class="building-item" data-building="roller">
-                        <div class="building-icon">⚙️</div>
-                        <div class="building-info">
-                            <div class="building-name">Roller</div>
-                            <div class="building-cost">Cost: 7 Copper</div>
-                        </div>
-                    </div>
-                    <div class="building-item" data-building="storage">
-                        <div class="building-icon">📦</div>
-                        <div class="building-info">
-                            <div class="building-name">Storage</div>
-                            <div class="building-cost">Cost: 3 Iron</div>
-                        </div>
-                    </div>
-                    <div class="building-item" data-building="furnace">
-                        <div class="building-icon">🔥</div>
-                        <div class="building-info">
-                            <div class="building-name">Furnace</div>
-                            <div class="building-cost">Cost: 5 Iron</div>
-                        </div>
-                    </div>
-                    <div class="building-item" data-building="assembler">
-                        <div class="building-icon">🔧</div>
-                        <div class="building-info">
-                            <div class="building-name">Assembler</div>
-                            <div class="building-cost">Cost: 8 Iron</div>
-                        </div>
-                    </div>
-                    <div class="building-item" data-building="advancedMiner">
-                        <div class="building-icon">⛏️</div>
-                        <div class="building-info">
-                            <div class="building-name">Advanced Miner</div>
-                            <div class="building-cost">Cost: 15 Iron</div>
-                        </div>
-                    </div>
-                    <div class="building-item" data-building="splitter">
-                        <div class="building-icon">↔️</div>
-                        <div class="building-info">
-                            <div class="building-name">Splitter</div>
-                            <div class="building-cost">Cost: 5 Iron</div>
-                        </div>
-                    </div>
-                    <div class="building-item" data-building="factory">
-                        <div class="building-icon">🏭</div>
-                        <div class="building-info">
-                            <div class="building-name">Factory</div>
-                            <div class="building-cost">Cost: 25 Iron</div>
-                        </div>
-                    </div>
-                    <div class="building-item" data-building="lab">
-                        <div class="building-icon">🧪</div>
-                        <div class="building-info">
-                            <div class="building-name">Research Lab</div>
-                            <div class="building-cost">Cost: 20 Iron</div>
-                        </div>
-                    </div>
-                    <div class="building-item" data-building="submitter">
-                        <div class="building-icon">📤</div>
-                        <div class="building-info">
-                            <div class="building-name">Submitter</div>
-                            <div class="building-cost">Cost: 2 Iron</div>
-                        </div>
+                <div class="building-item" data-building="ironMiner">
+                    <div class="building-icon">⛏️</div>
+                    <div class="building-info">
+                        <div class="building-name">Iron Miner</div>
+                        <div class="building-cost">5 Iron</div>
                     </div>
                 </div>
-                
-                <div class="controls">
-                    <h3>Controls</h3>
-                    <p>• Click building to select</p>
-                    <p>• Click grid to place</p>
-                    <p>• R to rotate building</p>
-                    <p>• WASD/Arrows to move camera</p>
-                    <p>• ESC to cancel</p>
-                    <p>• Delete for delete mode</p>
-                    <p>• Right-click buildings for details</p>
-                </div>
-                
-                <div class="mode-indicator">
-                    <div class="mode-item" id="buildMode">
-                        <span class="mode-icon">🔨</span>
-                        <span class="mode-name">Build Mode</span>
-                    </div>
-                    <div class="mode-item" id="deleteMode">
-                        <span class="mode-icon">🗑️</span>
-                        <span class="mode-name">Delete Mode</span>
+                <div class="building-item" data-building="copperMiner">
+                    <div class="building-icon">❓</div>
+                    <div class="building-info">
+                        <div class="building-name">❓</div>
+                        <div class="building-cost">❓</div>
                     </div>
                 </div>
-                
-                <div class="bottom-controls">
-                    <button class="recipe-btn" id="recipeBookBtn">📖 Recipe Book</button>
-                    <button class="research-btn" id="researchBtn">🔬 Research</button>
+                <div class="building-item" data-building="conveyor">
+                    <div class="building-icon">➡️</div>
+                    <div class="building-info">
+                        <div class="building-name">Conveyor</div>
+                        <div class="building-cost">1 Iron</div>
+                    </div>
                 </div>
-                
-                <div class="resource-counter">
-                    <h3>Resources</h3>
-                    <div class="resource-item">
-                        <span class="resource-icon">⚡</span>
-                        <span class="resource-name">Iron:</span>
-                        <span class="resource-amount" id="ironCount">8</span>
+                <div class="building-item" data-building="roller">
+                    <div class="building-icon">❓</div>
+                    <div class="building-info">
+                        <div class="building-name">❓</div>
+                        <div class="building-cost">❓</div>
                     </div>
-                    <div class="resource-item">
-                        <span class="resource-icon">🟤</span>
-                        <span class="resource-name">Copper:</span>
-                        <span class="resource-amount" id="copperCount">0</span>
+                </div>
+                <div class="building-item" data-building="storage">
+                    <div class="building-icon">❓</div>
+                    <div class="building-info">
+                        <div class="building-name">❓</div>
+                        <div class="building-cost">❓</div>
                     </div>
-                    <div class="resource-item">
-                        <span class="resource-icon">🔩</span>
-                        <span class="resource-name">Iron Rods:</span>
-                        <span class="resource-amount" id="ironRodCount">0</span>
+                </div>
+                <div class="building-item" data-building="furnace">
+                    <div class="building-icon">❓</div>
+                    <div class="building-info">
+                        <div class="building-name">❓</div>
+                        <div class="building-cost">❓</div>
                     </div>
-                    <div class="resource-item">
-                        <span class="resource-icon">🔧</span>
-                        <span class="resource-name">Copper Rods:</span>
-                        <span class="resource-amount" id="copperRodCount">0</span>
+                </div>
+                <div class="building-item" data-building="assembler">
+                    <div class="building-icon">❓</div>
+                    <div class="building-info">
+                        <div class="building-name">❓</div>
+                        <div class="building-cost">❓</div>
                     </div>
-                    <div class="resource-item">
-                        <span class="resource-icon">🔥</span>
-                        <span class="resource-name">Steel:</span>
-                        <span class="resource-amount" id="steelCount">0</span>
+                </div>
+                <div class="building-item" data-building="advancedMiner">
+                    <div class="building-icon">❓</div>
+                    <div class="building-info">
+                        <div class="building-name">❓</div>
+                        <div class="building-cost">❓</div>
                     </div>
-                    <div class="resource-item">
-                        <span class="resource-icon">⚙️</span>
-                        <span class="resource-name">Gears:</span>
-                        <span class="resource-amount" id="gearCount">0</span>
+                </div>
+                <div class="building-item" data-building="splitter">
+                    <div class="building-icon">❓</div>
+                    <div class="building-info">
+                        <div class="building-name">❓</div>
+                        <div class="building-cost">❓</div>
+                    </div>
+                </div>
+                <div class="building-item" data-building="factory">
+                    <div class="building-icon">❓</div>
+                    <div class="building-info">
+                        <div class="building-name">❓</div>
+                        <div class="building-cost">❓</div>
+                    </div>
+                </div>
+                <div class="building-item" data-building="lab">
+                    <div class="building-icon">❓</div>
+                    <div class="building-info">
+                        <div class="building-name">❓</div>
+                        <div class="building-cost">❓</div>
+                    </div>
+                </div>
+                <div class="building-item" data-building="submitter">
+                    <div class="building-icon">📤</div>
+                    <div class="building-info">
+                        <div class="building-name">Submitter</div>
+                        <div class="building-cost">2 Iron</div>
                     </div>
                 </div>
             </div>
         </div>
         
+        <!-- Menu Toggle -->
         <div class="menu-toggle" id="menuToggle">
-            <div class="arrow">▶</div>
+            <div class="arrow">🔨</div>
         </div>
         
+        <!-- Camera Controls -->
         <div class="camera-controls">
-            <button class="camera-btn" id="returnToSpawn">🏠 Return to Spawn</button>
+            <button class="camera-btn" id="returnToSpawn">🏠</button>
         </div>
+        
+        <!-- Delete Mode Overlay -->
+        <div class="delete-overlay" id="deleteOverlay"></div>
         
         <canvas id="gameCanvas" width="800" height="600"></canvas>
     </div>
@@ -219,6 +202,56 @@
                 </div>
                 <div class="research-levels" id="researchLevels">
                     <!-- Research levels will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ Settings & Controls</h2>
+                <button class="modal-close" id="closeSettingsModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h3>Controls</h3>
+                    <div class="control-item">
+                        <span class="control-key">Click</span>
+                        <span class="control-desc">Select building / Place building</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-key">R</span>
+                        <span class="control-desc">Rotate building</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-key">WASD / Arrows</span>
+                        <span class="control-desc">Move camera</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-key">Shift + Click</span>
+                        <span class="control-desc">Delete building</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-key">ESC</span>
+                        <span class="control-desc">Cancel selection</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-key">Right Click</span>
+                        <span class="control-desc">Building details</span>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>Game Settings</h3>
+                    <div class="setting-item">
+                        <label for="gridToggle">Show Grid:</label>
+                        <input type="checkbox" id="gridToggle" checked>
+                    </div>
+                    <div class="setting-item">
+                        <label for="soundToggle">Sound Effects:</label>
+                        <input type="checkbox" id="soundToggle" checked>
+                    </div>
                 </div>
             </div>
         </div>
