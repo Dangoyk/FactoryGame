@@ -660,6 +660,24 @@ body {
     accent-color: #4CAF50;
 }
 
+.reset-btn {
+    width: 100%;
+    background-color: #ff4444;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 12px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.2s;
+    margin-top: 10px;
+}
+
+.reset-btn:hover {
+    background-color: #ff6666;
+}
+
 /* Tooltip */
 .tooltip {
     position: absolute;
@@ -709,4 +727,103 @@ body {
 
 .building-details .close-btn:hover {
     color: #ff4444;
+}
+
+/* Hologram Styles */
+.hologram {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0.6;
+    animation: hologramPulse 2s ease-in-out infinite;
+    z-index: 10;
+}
+
+@keyframes hologramPulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 0.8; }
+}
+
+.hologram-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
+}
+
+.hologram-tutorial {
+    background-color: #1a1a1a;
+    border: 2px solid #4CAF50;
+    border-radius: 10px;
+    padding: 20px;
+    max-width: 500px;
+    text-align: center;
+}
+
+.hologram-tutorial h2 {
+    color: #4CAF50;
+    margin-bottom: 15px;
+}
+
+.hologram-tutorial p {
+    color: #ccc;
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.hologram-tutorial .tutorial-steps {
+    display: flex;
+    justify-content: space-around;
+    margin: 20px 0;
+}
+
+.tutorial-step {
+    text-align: center;
+    padding: 10px;
+}
+
+.tutorial-step .step-icon {
+    font-size: 32px;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.tutorial-step .step-text {
+    font-size: 12px;
+    color: #aaa;
+}
+
+.tutorial-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.tutorial-btn {
+    background-color: #4CAF50;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.tutorial-btn:hover {
+    background-color: #45a049;
+}
+
+.tutorial-btn.secondary {
+    background-color: #666;
+}
+
+.tutorial-btn.secondary:hover {
+    background-color: #777;
 }

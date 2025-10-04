@@ -16,6 +16,12 @@ class FactoryGame {
         this.menuOpen = false;
         this.deleteMode = false;
         
+        // Tutorial state
+        this.tutorialActive = false;
+        this.tutorialStep = 0;
+        this.holograms = [];
+        this.tutorialCompleted = false;
+        
         // Game state
         this.resources = {
             iron: 8,
@@ -256,6 +262,11 @@ class FactoryGame {
         this.updateBuildingAvailability();
         this.updateResearchGoal();
         
+        // Show tutorial if not completed
+        if (!this.tutorialCompleted) {
+            this.showTutorial();
+        }
+        
         // Start game loop
         this.gameLoop();
     }
@@ -279,6 +290,20 @@ class FactoryGame {
         // Settings modal
         document.getElementById('closeSettingsModal').addEventListener('click', () => {
             this.closeSettingsModal();
+        });
+        
+        // Reset game button
+        document.getElementById('resetGameBtn').addEventListener('click', () => {
+            this.resetGame();
+        });
+        
+        // Tutorial buttons
+        document.getElementById('startTutorialBtn').addEventListener('click', () => {
+            this.startTutorial();
+        });
+        
+        document.getElementById('skipTutorialBtn').addEventListener('click', () => {
+            this.skipTutorial();
         });
         
         // Window resize
@@ -386,6 +411,11 @@ class FactoryGame {
         // Draw items
         this.drawItems();
         
+        // Draw holograms if tutorial is active
+        if (this.tutorialActive) {
+            this.drawHolograms();
+        }
+        
         // Draw building preview if selected
         if (this.selectedBuilding) {
             this.drawBuildingPreview();
@@ -457,6 +487,8 @@ class FactoryGame {
         // Check for shift+click (delete mode)
         if (e.shiftKey) {
             this.deleteBuilding(gridX, gridY);
+        } else if (this.tutorialActive) {
+            this.handleTutorialClick(gridX, gridY);
         } else if (this.selectedBuilding) {
             this.placeBuilding(gridX, gridY);
         } else {
@@ -1830,6 +1862,288 @@ class FactoryGame {
     closeSettingsModal() {
         const modal = document.getElementById('settingsModal');
         modal.style.display = 'none';
+    }
+    
+    // Reset game system
+    resetGame() {
+        if (confirm('Are you sure you want to reset the game? This will delete all progress and buildings.')) {
+            // Reset game state
+            this.resources = {
+                iron: 8,
+                copper: 0,
+                ironRod: 0,
+                copperRod: 0,
+                steel: 0,
+                gear: 0
+            };
+            
+            this.researchLevel = 0;
+            this.researchProgress = 0;
+            this.discoveredItems = new Set(['iron']);
+            this.buildings.clear();
+            this.items.clear();
+            this.storage.clear();
+            this.selectedBuilding = null;
+            this.selectedBuildingRotation = 0;
+            this.camera.x = 0;
+            this.camera.y = 0;
+            this.tutorialCompleted = false;
+            
+            // Update UI
+            this.updateResourceDisplay();
+            this.updateBuildingAvailability();
+            this.updateResearchGoal();
+            this.draw();
+            
+            // Show tutorial again
+            this.showTutorial();
+            
+            console.log('Game reset successfully!');
+        }
+    }
+    
+    // Tutorial system
+    showTutorial() {
+        const tutorialOverlay = document.getElementById('hologramTutorial');
+        tutorialOverlay.style.display = 'flex';
+    }
+    
+    startTutorial() {
+        const tutorialOverlay = document.getElementById('hologramTutorial');
+        tutorialOverlay.style.display = 'none';
+        
+        this.tutorialActive = true;
+        this.tutorialStep = 0;
+        this.holograms = [];
+        
+        // Create tutorial holograms
+        this.createTutorialHolograms();
+        this.draw();
+    }
+    
+    skipTutorial() {
+        const tutorialOverlay = document.getElementById('hologramTutorial');
+        tutorialOverlay.style.display = 'none';
+        
+        this.tutorialActive = false;
+        this.tutorialCompleted = true;
+        this.holograms = [];
+        this.draw();
+    }
+    
+    createTutorialHolograms() {
+        // Clear existing holograms
+        this.holograms = [];
+        
+        // Tutorial building positions (relative to spawn)
+        const tutorialBuildings = [
+            { type: 'ironMiner', x: 2, y: 2, step: 0 },
+            { type: 'conveyor', x: 3, y: 2, step: 1 },
+            { type: 'submitter', x: 4, y: 2, step: 2 }
+        ];
+        
+        tutorialBuildings.forEach(building => {
+            this.holograms.push({
+                type: building.type,
+                x: building.x,
+                y: building.y,
+                step: building.step,
+                active: building.step === this.tutorialStep
+            });
+        });
+    }
+    
+    drawHolograms() {
+        this.holograms.forEach(hologram => {
+            if (hologram.active) {
+                const screenX = hologram.x * this.gridSize - this.camera.x;
+                const screenY = hologram.y * this.gridSize - this.camera.y;
+                
+                // Only draw if visible on screen
+                if (screenX > -this.gridSize && screenX < this.canvas.width + this.gridSize &&
+                    screenY > -this.gridSize && screenY < this.canvas.height + this.gridSize) {
+                    
+                    this.drawHologram(hologram, screenX, screenY);
+                }
+            }
+        });
+    }
+    
+    drawHologram(hologram, x, y) {
+        const buildingType = this.buildingTypes[hologram.type];
+        
+        // Draw hologram background
+        this.ctx.save();
+        this.ctx.globalAlpha = 0.3;
+        this.ctx.fillStyle = '#00FFFF';
+        this.ctx.fillRect(x, y, this.gridSize, this.gridSize);
+        this.ctx.restore();
+        
+        // Draw hologram border
+        this.ctx.save();
+        this.ctx.globalAlpha = 0.8;
+        this.ctx.strokeStyle = '#00FFFF';
+        this.ctx.lineWidth = 2;
+        this.ctx.setLineDash([5, 5]);
+        this.ctx.strokeRect(x, y, this.gridSize, this.gridSize);
+        this.ctx.restore();
+        
+        // Draw hologram icon
+        this.ctx.save();
+        this.ctx.globalAlpha = 0.8;
+        this.ctx.font = '24px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        this.ctx.fillStyle = '#00FFFF';
+        this.ctx.fillText(buildingType.icon, x + this.gridSize/2, y + this.gridSize/2);
+        this.ctx.restore();
+        
+        // Draw input/output arrows for hologram
+        this.drawHologramArrows(hologram, x, y);
+    }
+    
+    drawHologramArrows(hologram, x, y) {
+        const buildingType = this.buildingTypes[hologram.type];
+        
+        // Draw input arrows
+        buildingType.inputs.forEach(direction => {
+            this.drawHologramArrow(x, y, direction, '#00FF00');
+        });
+        
+        // Draw output arrows
+        buildingType.outputs.forEach(direction => {
+            this.drawHologramArrow(x, y, direction, '#FF0000');
+        });
+    }
+    
+    drawHologramArrow(x, y, direction, color) {
+        const centerX = x + this.gridSize / 2;
+        const centerY = y + this.gridSize / 2;
+        const arrowSize = 8;
+        
+        this.ctx.save();
+        this.ctx.globalAlpha = 0.8;
+        this.ctx.fillStyle = color;
+        this.ctx.strokeStyle = color;
+        this.ctx.lineWidth = 2;
+        
+        let arrowX = centerX;
+        let arrowY = centerY;
+        let rotation = 0;
+        
+        switch (direction) {
+            case 'up':
+                arrowY = y;
+                rotation = Math.PI;
+                break;
+            case 'down':
+                arrowY = y + this.gridSize;
+                rotation = 0;
+                break;
+            case 'left':
+                arrowX = x;
+                rotation = Math.PI / 2;
+                break;
+            case 'right':
+                arrowX = x + this.gridSize;
+                rotation = -Math.PI / 2;
+                break;
+        }
+        
+        this.ctx.translate(arrowX, arrowY);
+        this.ctx.rotate(rotation);
+        
+        // Draw arrow
+        this.ctx.beginPath();
+        this.ctx.moveTo(0, -arrowSize);
+        this.ctx.lineTo(-arrowSize/2, arrowSize/2);
+        this.ctx.lineTo(arrowSize/2, arrowSize/2);
+        this.ctx.closePath();
+        this.ctx.fill();
+        
+        this.ctx.restore();
+    }
+    
+    handleTutorialClick(gridX, gridY) {
+        // Find hologram at clicked position
+        const clickedHologram = this.holograms.find(h => 
+            h.x === gridX && h.y === gridY && h.active
+        );
+        
+        if (clickedHologram) {
+            // Place the building
+            this.placeBuilding(gridX, gridY, clickedHologram.type);
+            
+            // Move to next tutorial step
+            this.tutorialStep++;
+            
+            // Update hologram states
+            this.holograms.forEach(h => {
+                h.active = h.step === this.tutorialStep;
+            });
+            
+            // Check if tutorial is complete
+            if (this.tutorialStep >= this.holograms.length) {
+                this.completeTutorial();
+            }
+            
+            this.draw();
+        }
+    }
+    
+    placeBuilding(gridX, gridY, buildingType = null) {
+        const type = buildingType || this.selectedBuilding;
+        if (!type) return;
+        
+        const key = `${gridX},${gridY}`;
+        
+        // Check if position is occupied
+        if (this.buildings.has(key)) {
+            return;
+        }
+        
+        // Check if we can afford it
+        if (!this.canAfford(type)) {
+            return;
+        }
+        
+        // Place building
+        this.buildings.set(key, {
+            type: type,
+            x: gridX,
+            y: gridY,
+            rotation: this.selectedBuildingRotation,
+            lastProduction: null,
+            processing: false,
+            processingTime: 0
+        });
+        
+        // Deduct cost
+        if (type === 'roller') {
+            this.resources.copper -= this.buildingTypes[type].cost;
+        } else {
+            this.resources.iron -= this.buildingTypes[type].cost;
+        }
+        
+        // Clear selection
+        this.selectedBuilding = null;
+        this.selectedBuildingRotation = 0;
+        
+        // Update UI
+        this.updateResourceDisplay();
+        this.updateBuildingSelection();
+        this.draw();
+    }
+    
+    completeTutorial() {
+        this.tutorialActive = false;
+        this.tutorialCompleted = true;
+        this.holograms = [];
+        
+        // Show completion message
+        alert('🎉 Tutorial Complete! You\'ve built your first factory! Now try building more advanced structures and research new technologies.');
+        
+        this.draw();
     }
 }
 
