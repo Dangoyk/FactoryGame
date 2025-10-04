@@ -16,7 +16,10 @@ class FactoryGame {
         
         // Game state
         this.resources = {
-            iron: 8
+            iron: 8,
+            copper: 0,
+            ironRod: 0,
+            copperRod: 0
         };
         
         // Building system
@@ -25,7 +28,7 @@ class FactoryGame {
         this.buildings = new Map(); // grid position -> building data
         this.deleteMode = false;
         this.buildingTypes = {
-            miner: { 
+            ironMiner: { 
                 cost: 5, 
                 icon: '⛏️', 
                 color: '#8B4513',
@@ -35,6 +38,17 @@ class FactoryGame {
                 productionType: 'iron',
                 name: 'Iron Miner',
                 description: 'Extracts iron from the ground. Produces 1 iron per second. Outputs to the right.'
+            },
+            copperMiner: { 
+                cost: 10, 
+                icon: '⛏️', 
+                color: '#B87333',
+                inputs: [],
+                outputs: ['right'],
+                productionRate: 0.8, // copper per second
+                productionType: 'copper',
+                name: 'Copper Miner',
+                description: 'Extracts copper from the ground. Produces 0.8 copper per second. Outputs to the right.'
             },
             conveyor: { 
                 cost: 1, 
@@ -46,21 +60,43 @@ class FactoryGame {
                 name: 'Conveyor Belt',
                 description: 'Transports items from left to right at 1 item per second. Essential for automation.'
             },
+            roller: { 
+                cost: 7, 
+                icon: '⚙️', 
+                color: '#FF6B35',
+                inputs: ['left'],
+                outputs: ['right'],
+                productionRate: 0.5, // rods per second
+                name: 'Roller',
+                description: 'Rolls copper into copper rods and iron into iron rods. Processes 0.5 items per second.'
+            },
+            storage: { 
+                cost: 3, 
+                icon: '📦', 
+                color: '#4A90E2',
+                inputs: ['left', 'up', 'down', 'right'],
+                outputs: ['left', 'up', 'down', 'right'],
+                capacity: 10,
+                name: 'Storage Container',
+                description: 'Stores up to 10 items. Can input and output from all directions.'
+            },
             submitter: { 
                 cost: 2, 
-                icon: '📦', 
+                icon: '📤', 
                 color: '#4CAF50',
-                inputs: ['left', 'up', 'down'],
+                inputs: ['left', 'up', 'down', 'right'],
                 outputs: [],
                 name: 'Resource Submitter',
-                description: 'Collects items from multiple directions and converts them back to resources. Accepts inputs from left, up, and down.'
+                description: 'Collects items from all directions and converts them back to resources. Accepts inputs from all sides.'
             }
         };
         
         // Game loop for building functionality
         this.lastUpdate = Date.now();
         this.items = new Map(); // For items on conveyors
+        this.storage = new Map(); // For storage containers
         this.mousePos = { x: 0, y: 0 };
+        this.animationTime = 0;
         
         // Camera system
         this.camera = { x: 0, y: 0 };
@@ -280,7 +316,12 @@ class FactoryGame {
     }
     
     canAfford(buildingType) {
-        return this.resources.iron >= this.buildingTypes[buildingType].cost;
+        const building = this.buildingTypes[buildingType];
+        if (buildingType === 'roller') {
+            return this.resources.copper >= building.cost;
+        } else {
+            return this.resources.iron >= building.cost;
+        }
     }
     
     placeBuilding(gridX, gridY) {
@@ -305,7 +346,12 @@ class FactoryGame {
         });
         
         // Deduct cost
-        this.resources.iron -= this.buildingTypes[this.selectedBuilding].cost;
+        const building = this.buildingTypes[this.selectedBuilding];
+        if (this.selectedBuilding === 'roller') {
+            this.resources.copper -= building.cost;
+        } else {
+            this.resources.iron -= building.cost;
+        }
         
         // Update UI
         this.updateResourceDisplay();
@@ -339,16 +385,58 @@ class FactoryGame {
         this.ctx.lineWidth = 2;
         this.ctx.strokeRect(x + 2, y + 2, this.gridSize - 4, this.gridSize - 4);
         
-        // Draw building icon with rotation
+        // Special drawing for conveyor animation
+        if (building.type === 'conveyor') {
+            this.drawConveyorAnimation(building, x, y);
+        } else {
+            // Draw building icon with rotation
+            this.ctx.save();
+            this.ctx.translate(x + this.gridSize/2, y + this.gridSize/2);
+            this.ctx.rotate(building.rotation * Math.PI / 2);
+            
+            this.ctx.font = '20px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.fillStyle = '#fff';
+            this.ctx.fillText(buildingType.icon, 0, 0);
+            
+            this.ctx.restore();
+        }
+        
+        // Draw storage capacity indicator
+        if (building.type === 'storage') {
+            const key = `${building.x},${building.y}`;
+            const storageData = this.storage.get(key);
+            if (storageData) {
+                this.ctx.fillStyle = '#fff';
+                this.ctx.font = '10px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(`${storageData.items.length}/${buildingType.capacity}`, x + this.gridSize/2, y + this.gridSize - 5);
+            }
+        }
+    }
+    
+    drawConveyorAnimation(building, x, y) {
+        // Draw animated conveyor belt
         this.ctx.save();
         this.ctx.translate(x + this.gridSize/2, y + this.gridSize/2);
         this.ctx.rotate(building.rotation * Math.PI / 2);
         
-        this.ctx.font = '20px Arial';
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
-        this.ctx.fillStyle = '#fff';
-        this.ctx.fillText(buildingType.icon, 0, 0);
+        // Draw conveyor belt lines
+        this.ctx.strokeStyle = '#888';
+        this.ctx.lineWidth = 2;
+        
+        const numLines = 4;
+        const lineSpacing = (this.gridSize - 8) / numLines;
+        const offset = (this.animationTime * 0.5) % lineSpacing;
+        
+        for (let i = 0; i < numLines + 1; i++) {
+            const lineX = -this.gridSize/2 + 4 + (i * lineSpacing) - offset;
+            this.ctx.beginPath();
+            this.ctx.moveTo(lineX, -this.gridSize/2 + 4);
+            this.ctx.lineTo(lineX, this.gridSize/2 - 4);
+            this.ctx.stroke();
+        }
         
         this.ctx.restore();
     }
@@ -509,6 +597,9 @@ class FactoryGame {
     
     updateResourceDisplay() {
         document.getElementById('ironCount').textContent = this.resources.iron;
+        document.getElementById('copperCount').textContent = this.resources.copper;
+        document.getElementById('ironRodCount').textContent = this.resources.ironRod;
+        document.getElementById('copperRodCount').textContent = this.resources.copperRod;
         this.updateBuildingAvailability();
     }
     
@@ -614,9 +705,11 @@ class FactoryGame {
         const now = Date.now();
         const deltaTime = (now - this.lastUpdate) / 1000; // Convert to seconds
         this.lastUpdate = now;
+        this.animationTime += deltaTime;
         
         this.updateBuildings(deltaTime);
         this.updateItems(deltaTime);
+        this.updateStorage(deltaTime);
         this.draw();
         
         requestAnimationFrame(() => this.gameLoop());
@@ -632,11 +725,18 @@ class FactoryGame {
         const buildingType = this.buildingTypes[building.type];
         
         switch (building.type) {
-            case 'miner':
+            case 'ironMiner':
+            case 'copperMiner':
                 this.updateMiner(building, buildingType, deltaTime);
                 break;
             case 'conveyor':
                 this.updateConveyor(building, buildingType, deltaTime);
+                break;
+            case 'roller':
+                this.updateRoller(building, buildingType, deltaTime);
+                break;
+            case 'storage':
+                this.updateStorageBuilding(building, buildingType, deltaTime);
                 break;
             case 'submitter':
                 this.updateSubmitter(building, buildingType, deltaTime);
@@ -674,26 +774,138 @@ class FactoryGame {
         const item = this.items.get(key);
         
         if (item) {
-            item.progress += buildingType.speed * deltaTime;
+            // Get rotated output direction
+            const rotatedOutputs = this.rotateDirections(buildingType.outputs, building.rotation);
+            const nextPos = this.getOutputPosition(building, rotatedOutputs[0]);
             
-            if (item.progress >= 1) {
-                // Get rotated output direction
-                const rotatedOutputs = this.rotateDirections(buildingType.outputs, building.rotation);
-                const nextPos = this.getOutputPosition(building, rotatedOutputs[0]);
-                if (nextPos) {
-                    this.items.delete(key);
-                    this.items.set(`${nextPos.x},${nextPos.y}`, {
-                        ...item,
-                        x: nextPos.x,
-                        y: nextPos.y,
+            // Check if next position is available (not blocked)
+            const canMove = !nextPos || !this.items.has(`${nextPos.x},${nextPos.y}`) && 
+                           !this.isStorageFull(nextPos.x, nextPos.y);
+            
+            if (canMove) {
+                item.progress += buildingType.speed * deltaTime;
+                
+                if (item.progress >= 1) {
+                    if (nextPos) {
+                        // Move to next position
+                        this.items.delete(key);
+                        this.items.set(`${nextPos.x},${nextPos.y}`, {
+                            ...item,
+                            x: nextPos.x,
+                            y: nextPos.y,
+                            progress: 0
+                        });
+                    } else {
+                        // No output, item falls off (but we prevent this now)
+                        this.items.delete(key);
+                    }
+                }
+            }
+            // If can't move, item stays in place (conveyor stops)
+        }
+    }
+    
+    updateRoller(building, buildingType, deltaTime) {
+        // Process items in roller
+        const key = `${building.x},${building.y}`;
+        const item = this.items.get(key);
+        
+        if (item && !building.processing) {
+            building.processing = true;
+            building.processingTime = 0;
+            building.processingItem = item.type;
+        }
+        
+        if (building.processing) {
+            building.processingTime += deltaTime;
+            
+            if (building.processingTime >= 1 / buildingType.productionRate) {
+                // Convert item to rod
+                let outputType;
+                if (building.processingItem === 'iron') {
+                    outputType = 'ironRod';
+                } else if (building.processingItem === 'copper') {
+                    outputType = 'copperRod';
+                }
+                
+                if (outputType) {
+                    // Get rotated output direction
+                    const rotatedOutputs = this.rotateDirections(buildingType.outputs, building.rotation);
+                    const outputPos = this.getOutputPosition(building, rotatedOutputs[0]);
+                    
+                    if (outputPos && !this.items.has(`${outputPos.x},${outputPos.y}`) && 
+                        !this.isStorageFull(outputPos.x, outputPos.y)) {
+                        // Create rod item
+                        this.items.set(`${outputPos.x},${outputPos.y}`, {
+                            type: outputType,
+                            x: outputPos.x,
+                            y: outputPos.y,
+                            progress: 0
+                        });
+                        
+                        // Remove input item
+                        this.items.delete(key);
+                    }
+                }
+                
+                building.processing = false;
+                building.processingTime = 0;
+                building.processingItem = null;
+            }
+        }
+    }
+    
+    updateStorageBuilding(building, buildingType, deltaTime) {
+        const key = `${building.x},${building.y}`;
+        
+        // Initialize storage if not exists
+        if (!this.storage.has(key)) {
+            this.storage.set(key, { items: [] });
+        }
+        
+        const storageData = this.storage.get(key);
+        
+        // Check for items to store
+        const item = this.items.get(key);
+        if (item && storageData.items.length < buildingType.capacity) {
+            storageData.items.push(item.type);
+            this.items.delete(key);
+        }
+        
+        // Try to output items
+        if (storageData.items.length > 0) {
+            const rotatedOutputs = this.rotateDirections(buildingType.outputs, building.rotation);
+            for (const direction of rotatedOutputs) {
+                const outputPos = this.getOutputPosition(building, direction);
+                if (outputPos && !this.items.has(`${outputPos.x},${outputPos.y}`) && 
+                    !this.isStorageFull(outputPos.x, outputPos.y)) {
+                    // Output item
+                    const itemType = storageData.items.shift();
+                    this.items.set(`${outputPos.x},${outputPos.y}`, {
+                        type: itemType,
+                        x: outputPos.x,
+                        y: outputPos.y,
                         progress: 0
                     });
-                } else {
-                    // No output, remove item
-                    this.items.delete(key);
+                    break;
                 }
             }
         }
+    }
+    
+    updateStorage(deltaTime) {
+        // Storage updates are handled in updateStorageBuilding
+    }
+    
+    isStorageFull(x, y) {
+        const key = `${x},${y}`;
+        const building = this.buildings.get(key);
+        if (building && building.type === 'storage') {
+            const storageData = this.storage.get(key);
+            const buildingType = this.buildingTypes[building.type];
+            return storageData && storageData.items.length >= buildingType.capacity;
+        }
+        return false;
     }
     
     updateSubmitter(building, buildingType, deltaTime) {
@@ -750,8 +962,24 @@ class FactoryGame {
     }
     
     drawItem(item, x, y) {
-        // Draw item as a small circle
-        this.ctx.fillStyle = item.type === 'iron' ? '#C0C0C0' : '#FFD700';
+        // Draw item as a small circle with different colors
+        let color = '#C0C0C0'; // Default silver
+        switch (item.type) {
+            case 'iron':
+                color = '#C0C0C0'; // Silver
+                break;
+            case 'copper':
+                color = '#B87333'; // Copper
+                break;
+            case 'ironRod':
+                color = '#A0A0A0'; // Dark silver
+                break;
+            case 'copperRod':
+                color = '#CD7F32'; // Bronze
+                break;
+        }
+        
+        this.ctx.fillStyle = color;
         this.ctx.beginPath();
         this.ctx.arc(x + this.gridSize/2, y + this.gridSize/2, 6, 0, 2 * Math.PI);
         this.ctx.fill();
