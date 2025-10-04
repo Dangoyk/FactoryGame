@@ -136,9 +136,8 @@ class FactoryGame {
                 inputs: ['left'],
                 outputs: ['right'],
                 productionRate: 0.5, // rods per second
-                powerConsumption: 2, // Requires power
                 name: 'Roller',
-                description: 'Rolls copper into copper rods and iron into iron rods. Processes 0.5 items per second. Requires 2 power.'
+                description: 'Rolls copper into copper rods and iron into iron rods. Processes 0.5 items per second.'
             },
             storage: { 
                 cost: 3, 
@@ -164,7 +163,7 @@ class FactoryGame {
             },
             assembler: { 
                 cost: 8, 
-                icon: '🔧', 
+                icon: '⚙️', 
                 color: '#8B008B',
                 inputs: ['left', 'up'],
                 outputs: ['right'],
@@ -242,7 +241,7 @@ class FactoryGame {
              motorFactory: { 
                  cost: 15, 
                  costItems: { iron: 20, gear: 8, steel: 8 }, // Special cost requiring multiple items
-                 icon: '⚡', 
+                 icon: '🔧', 
                  color: '#FFD700',
                  inputs: ['left', 'up'],
                  outputs: ['right'],
@@ -417,7 +416,7 @@ class FactoryGame {
                  ingredients: ['gold', 'steel']
              },
              motor: {
-                 icon: '⚡',
+                 icon: '🔧',
                  name: 'Motor',
                  description: 'Mechanical device that converts energy into motion',
                  category: 'mechanical',
@@ -1104,9 +1103,7 @@ class FactoryGame {
         document.getElementById('uraniumCount').textContent = this.resources.uranium;
         document.getElementById('goldCount').textContent = this.resources.gold;
         
-        // Update power display (now in resource bar)
-        document.getElementById('powerDisplay').textContent = 
-            `${this.powerGrid.totalProduction}/${this.powerGrid.totalConsumption}`;
+        // Power display will be updated after buildings are processed
         
         this.updateBuildingAvailability();
         this.updateResearchGoal(); // Update progress bar when resources change
@@ -1121,6 +1118,12 @@ class FactoryGame {
         const recipeBookModal = document.getElementById('recipeBookModal');
         if (recipeBookModal && recipeBookModal.style.display === 'flex') {
             this.populateRecipeBook();
+        }
+        
+        // Update debug display if it's open
+        const debugModal = document.getElementById('debugModal');
+        if (debugModal && debugModal.style.display === 'flex') {
+            this.updateDebugDisplay();
         }
     }
     
@@ -1207,7 +1210,7 @@ class FactoryGame {
         } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
             this.camera.y += this.gridSize * 2;
             this.draw();
-        } else if (e.key === 'h' || e.key === 'H') {
+        } else if (e.key === 'Home') {
             // Return to spawn/home
             this.returnToSpawn();
         } else if (e.key === 'b' || e.key === 'B') {
@@ -1379,6 +1382,10 @@ class FactoryGame {
         
         // Update power resource
         this.resources.power = Math.max(0, this.powerGrid.totalProduction - this.powerGrid.totalConsumption);
+        
+        // Update power display
+        document.getElementById('powerDisplay').textContent = 
+            `${this.powerGrid.totalProduction}/${this.powerGrid.totalConsumption}`;
     }
     
     updateBuilding(building, deltaTime) {
@@ -1513,12 +1520,7 @@ class FactoryGame {
     }
     
     updateRoller(building, buildingType, deltaTime) {
-        // Add power consumption to grid
-        if (buildingType.powerConsumption) {
-            this.powerGrid.totalConsumption += buildingType.powerConsumption;
-        }
-        
-        // Process items in roller (only if we have enough power)
+        // Process items in roller
         const key = `${building.x},${building.y}`;
         const item = this.items.get(key);
         
@@ -1529,11 +1531,9 @@ class FactoryGame {
         }
         
         if (building.processing) {
-            // Apply power efficiency to processing speed
-            const effectiveProductionRate = buildingType.productionRate * this.powerGrid.efficiency;
             building.processingTime += deltaTime;
             
-            if (building.processingTime >= 1 / effectiveProductionRate) {
+            if (building.processingTime >= 1 / buildingType.productionRate) {
                 // Convert item to rod
                 let outputType;
                 if (building.processingItem === 'iron') {

@@ -23,6 +23,10 @@
             </div>
         </div>
         <div class="top-right-controls">
+            <div class="power-display">
+                <span class="power-icon">⚡</span>
+                <span class="power-text" id="powerDisplay">0/0</span>
+            </div>
             <button class="top-btn" id="helpBtn">❓</button>
             <button class="top-btn" id="recipeBookBtn">📖</button>
             <button class="top-btn" id="researchBtn">🔬</button>
@@ -61,7 +65,7 @@
                 <span class="resource-amount" id="circuitCount">0</span>
             </div>
             <div class="resource-item">
-                <span class="resource-icon">⚡</span>
+                <span class="resource-icon">🔧</span>
                 <span class="resource-amount" id="motorCount">0</span>
             </div>
             <div class="resource-item">
@@ -71,10 +75,6 @@
             <div class="resource-item">
                 <span class="resource-icon">🤖</span>
                 <span class="resource-amount" id="robotCount">0</span>
-            </div>
-            <div class="resource-item">
-                <span class="resource-icon">⚡</span>
-                <span class="resource-amount" id="powerDisplay">0/0</span>
             </div>
             <div class="resource-item">
                 <span class="resource-icon">🪨</span>
@@ -243,7 +243,7 @@
                     <div class="building-icon">☀️</div>
                     <div class="building-info">
                         <div class="building-name">Solar Panel</div>
-                        <div class="building-cost">15 Iron</div>
+                        <div class="building-cost">12 Iron</div>
                     </div>
                 </div>
                 <div class="building-item" data-building="nuclearReactor">
@@ -342,20 +342,6 @@
                         <li>🔌 <strong>Power Consumption:</strong> Most advanced buildings consume power to operate</li>
                         <li>⚖️ <strong>Power Efficiency:</strong> If consumption > production, buildings slow down</li>
                         <li>📊 <strong>Power Display:</strong> Shows "Production/Consumption" in top-right corner</li>
-                    </ul>
-                </div>
-                
-                <div class="help-section">
-                    <h3>🏗️ Building Costs</h3>
-                    <p><strong>Resource Requirements:</strong></p>
-                    <ul>
-                        <li>🏗️ <strong>Basic Buildings:</strong> Cost only iron or copper (miners, conveyors, submitters)</li>
-                        <li>⚙️ <strong>Advanced Buildings:</strong> Require multiple special items (gears, steel, circuits, motors, etc.)</li>
-                        <li>🥇 <strong>Gold Miners:</strong> Cost 10 iron + 2 gears</li>
-                        <li>🏭 <strong>Circuit Factory:</strong> Cost 15 iron + 3 gears + 5 steel</li>
-                        <li>🤖 <strong>Robot Factory:</strong> Cost 100 iron + 25 gears + 30 steel + 10 circuits + 3 motors</li>
-                        <li>💰 <strong>Cost Display:</strong> Hover over buildings to see exact costs</li>
-                        <li>🔄 <strong>Refunds:</strong> Deleting buildings refunds 50% of all resources</li>
                     </ul>
                 </div>
                 
@@ -497,7 +483,7 @@
                         <span class="control-desc">Building details</span>
                     </div>
                     <div class="control-item">
-                        <span class="control-key">H</span>
+                        <span class="control-key">Home</span>
                         <span class="control-desc">Return to spawn</span>
                     </div>
                     <div class="control-item">
