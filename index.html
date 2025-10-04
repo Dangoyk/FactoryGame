@@ -27,6 +27,7 @@
                 <span class="power-icon">⚡</span>
                 <span class="power-text" id="powerDisplay">0/0</span>
             </div>
+            <button class="top-btn" id="helpBtn">❓</button>
             <button class="top-btn" id="recipeBookBtn">📖</button>
             <button class="top-btn" id="researchBtn">🔬</button>
             <button class="top-btn" id="settingsBtn">⚙️</button>
@@ -308,6 +309,73 @@
         </div>
     </div>
     
+    <!-- Help Modal -->
+    <div class="modal-overlay" id="helpModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>❓ Help & Game Guide</h2>
+                <button class="modal-close" id="closeHelpModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="help-section">
+                    <h3>⚡ Power System</h3>
+                    <p><strong>How Power Works:</strong></p>
+                    <ul>
+                        <li>⚡ <strong>Power Production:</strong> Coal Generators, Solar Panels, and Nuclear Reactors produce power</li>
+                        <li>🔌 <strong>Power Consumption:</strong> Most advanced buildings consume power to operate</li>
+                        <li>⚖️ <strong>Power Efficiency:</strong> If consumption > production, buildings slow down</li>
+                        <li>📊 <strong>Power Display:</strong> Shows "Production/Consumption" in top-right corner</li>
+                    </ul>
+                </div>
+                
+                <div class="help-section">
+                    <h3>🏗️ Building Costs</h3>
+                    <p><strong>Resource Requirements:</strong></p>
+                    <ul>
+                        <li>🏗️ <strong>Basic Buildings:</strong> Cost only iron or copper</li>
+                        <li>⚙️ <strong>Advanced Buildings:</strong> Require multiple resources (gears, steel, circuits, etc.)</li>
+                        <li>💰 <strong>Cost Display:</strong> Hover over buildings to see exact costs</li>
+                        <li>🔄 <strong>Refunds:</strong> Deleting buildings refunds 50% of resources</li>
+                    </ul>
+                </div>
+                
+                <div class="help-section">
+                    <h3>🔬 Research System</h3>
+                    <p><strong>Progression:</strong></p>
+                    <ul>
+                        <li>🔬 <strong>Research Levels:</strong> 8 levels unlock new buildings and items</li>
+                        <li>📋 <strong>Requirements:</strong> Create specific items to advance research</li>
+                        <li>🏭 <strong>Labs:</strong> Build labs to generate research points faster</li>
+                        <li>🎯 <strong>Goals:</strong> Current research goal shown at top of screen</li>
+                    </ul>
+                </div>
+                
+                <div class="help-section">
+                    <h3>🏭 Production Chains</h3>
+                    <p><strong>Automation:</strong></p>
+                    <ul>
+                        <li>⛏️ <strong>Miners:</strong> Extract raw materials (iron, copper, gold)</li>
+                        <li>🔄 <strong>Conveyors:</strong> Transport items between buildings</li>
+                        <li>🏭 <strong>Factories:</strong> Process materials into advanced items</li>
+                        <li>📦 <strong>Storage:</strong> Store items for later use</li>
+                        <li>✅ <strong>Submitters:</strong> Convert items back to resources</li>
+                    </ul>
+                </div>
+                
+                <div class="help-section">
+                    <h3>💡 Tips</h3>
+                    <ul>
+                        <li>🎯 <strong>Start Small:</strong> Build basic iron miners and conveyors first</li>
+                        <li>⚡ <strong>Power Early:</strong> Build coal generators before advanced buildings</li>
+                        <li>🔍 <strong>Hover for Info:</strong> Hover over buildings for descriptions</li>
+                        <li>🖱️ <strong>Right-Click:</strong> Right-click buildings for detailed status</li>
+                        <li>📖 <strong>Recipe Book:</strong> Check discovered items and their uses</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Settings Modal -->
     <div class="modal-overlay" id="settingsModal">
         <div class="modal-content">
@@ -365,6 +433,10 @@
                     <div class="control-item">
                         <span class="control-key">M</span>
                         <span class="control-desc">Toggle sound</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-key">H</span>
+                        <span class="control-desc">Open help</span>
                     </div>
                 </div>
                 <div class="settings-section">

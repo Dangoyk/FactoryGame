@@ -540,6 +540,14 @@ class FactoryGame {
         });
         
         // Settings button
+        document.getElementById('helpBtn').addEventListener('click', () => {
+            this.openHelpModal();
+        });
+        
+        document.getElementById('closeHelpModal').addEventListener('click', () => {
+            this.closeHelpModal();
+        });
+        
         document.getElementById('settingsBtn').addEventListener('click', () => {
             this.openSettingsModal();
         });
@@ -1095,12 +1103,14 @@ class FactoryGame {
         this.updateResearchGoal(); // Update progress bar when resources change
         
         // Update research modal if it's open
-        if (document.getElementById('researchModal').style.display === 'flex') {
+        const researchModal = document.getElementById('researchModal');
+        if (researchModal && researchModal.style.display === 'flex') {
             this.populateResearchModal();
         }
         
         // Update recipe book if it's open
-        if (document.getElementById('recipeBookModal').style.display === 'flex') {
+        const recipeBookModal = document.getElementById('recipeBookModal');
+        if (recipeBookModal && recipeBookModal.style.display === 'flex') {
             this.populateRecipeBook();
         }
     }
@@ -1220,6 +1230,8 @@ class FactoryGame {
             // Toggle sound
             this.toggleSound();
             document.getElementById('soundToggle').checked = this.soundEnabled;
+        } else if (e.key === 'h' || e.key === 'H') {
+            this.openHelpModal();
         }
     }
     
@@ -2737,6 +2749,16 @@ class FactoryGame {
     }
     
     // Settings modal system
+    openHelpModal() {
+        const modal = document.getElementById('helpModal');
+        modal.style.display = 'flex';
+    }
+    
+    closeHelpModal() {
+        const modal = document.getElementById('helpModal');
+        modal.style.display = 'none';
+    }
+    
     openSettingsModal() {
         const modal = document.getElementById('settingsModal');
         modal.style.display = 'flex';
