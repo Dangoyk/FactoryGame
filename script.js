@@ -944,8 +944,25 @@ class FactoryGame {
                 .join(', ');
             goalElement.querySelector('.goal-text').textContent = 
                 `Research Level ${nextLevel}: Collect ${requirementText}`;
+            
+            // Calculate progress
+            let totalRequired = 0;
+            let totalMet = 0;
+            
+            for (const [itemType, requiredAmount] of Object.entries(requirements.items)) {
+                totalRequired += requiredAmount;
+                totalMet += Math.min(this.resources[itemType] || 0, requiredAmount);
+            }
+            
+            const progressPercent = totalRequired > 0 ? (totalMet / totalRequired) * 100 : 0;
+            
+            // Update progress bar
+            document.getElementById('goalProgressFill').style.width = `${progressPercent}%`;
+            document.getElementById('goalProgressText').textContent = `${Math.round(progressPercent)}%`;
         } else {
             goalElement.querySelector('.goal-text').textContent = 'All research levels completed!';
+            document.getElementById('goalProgressFill').style.width = '100%';
+            document.getElementById('goalProgressText').textContent = '100%';
         }
     }
     
@@ -1935,11 +1952,18 @@ class FactoryGame {
         // Clear existing holograms
         this.holograms = [];
         
-        // Tutorial building positions (relative to spawn)
+        // Center the camera on the tutorial area
+        this.camera.x = 0;
+        this.camera.y = 0;
+        
+        // Tutorial building positions (centered on screen)
+        const centerX = Math.floor(this.canvas.width / 2 / this.gridSize);
+        const centerY = Math.floor(this.canvas.height / 2 / this.gridSize);
+        
         const tutorialBuildings = [
-            { type: 'ironMiner', x: 2, y: 2, step: 0 },
-            { type: 'conveyor', x: 3, y: 2, step: 1 },
-            { type: 'submitter', x: 4, y: 2, step: 2 }
+            { type: 'ironMiner', x: centerX - 1, y: centerY, step: 0 },
+            { type: 'conveyor', x: centerX, y: centerY, step: 1 },
+            { type: 'submitter', x: centerX + 1, y: centerY, step: 2 }
         ];
         
         tutorialBuildings.forEach(building => {
@@ -2141,9 +2165,40 @@ class FactoryGame {
         this.holograms = [];
         
         // Show completion message
-        alert('🎉 Tutorial Complete! You\'ve built your first factory! Now try building more advanced structures and research new technologies.');
+        this.showNotification(
+            '🎉 Tutorial Complete!',
+            'You\'ve built your first factory! Now try building more advanced structures and research new technologies.',
+            'Continue'
+        );
         
         this.draw();
+    }
+    
+    showNotification(title, message, buttonText = 'OK') {
+        // Remove any existing notification
+        const existingNotification = document.querySelector('.game-notification');
+        if (existingNotification) {
+            existingNotification.remove();
+        }
+        
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = 'game-notification';
+        notification.innerHTML = `
+            <div class="notification-title">${title}</div>
+            <div class="notification-message">${message}</div>
+            <button class="notification-button" onclick="this.parentElement.remove()">${buttonText}</button>
+        `;
+        
+        // Add to page
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove();
+            }
+        }, 5000);
     }
 }
 

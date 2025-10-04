@@ -9,9 +9,18 @@
 <body>
     <!-- Top UI Bar -->
     <div class="top-bar">
+        <div class="top-left-spacer"></div>
         <div class="research-goal" id="researchGoal">
-            <span class="goal-icon">🎯</span>
-            <span class="goal-text">Research Level 1: Collect 10 Iron</span>
+            <div class="goal-header">
+                <span class="goal-icon">🎯</span>
+                <span class="goal-text">Research Level 1: Collect 10 Iron</span>
+            </div>
+            <div class="goal-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="goalProgressFill"></div>
+                </div>
+                <span class="progress-text" id="goalProgressText">0%</span>
+            </div>
         </div>
         <div class="top-right-controls">
             <button class="top-btn" id="recipeBookBtn">📖</button>
