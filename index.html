@@ -14,29 +14,6 @@
                 <button class="close-btn" id="closeBtn">&times;</button>
             </div>
             <div class="menu-content">
-                <div class="resource-counter">
-                    <h3>Resources</h3>
-                    <div class="resource-item">
-                        <span class="resource-icon">⚡</span>
-                        <span class="resource-name">Iron:</span>
-                        <span class="resource-amount" id="ironCount">8</span>
-                    </div>
-                    <div class="resource-item">
-                        <span class="resource-icon">🟤</span>
-                        <span class="resource-name">Copper:</span>
-                        <span class="resource-amount" id="copperCount">0</span>
-                    </div>
-                    <div class="resource-item">
-                        <span class="resource-icon">🔩</span>
-                        <span class="resource-name">Iron Rods:</span>
-                        <span class="resource-amount" id="ironRodCount">0</span>
-                    </div>
-                    <div class="resource-item">
-                        <span class="resource-icon">🔧</span>
-                        <span class="resource-name">Copper Rods:</span>
-                        <span class="resource-amount" id="copperRodCount">0</span>
-                    </div>
-                </div>
                 
                 <div class="building-menu">
                     <h3>Buildings</h3>
@@ -75,6 +52,20 @@
                             <div class="building-cost">Cost: 3 Iron</div>
                         </div>
                     </div>
+                    <div class="building-item" data-building="furnace">
+                        <div class="building-icon">🔥</div>
+                        <div class="building-info">
+                            <div class="building-name">Furnace</div>
+                            <div class="building-cost">Cost: 5 Iron</div>
+                        </div>
+                    </div>
+                    <div class="building-item" data-building="assembler">
+                        <div class="building-icon">🔧</div>
+                        <div class="building-info">
+                            <div class="building-name">Assembler</div>
+                            <div class="building-cost">Cost: 8 Iron</div>
+                        </div>
+                    </div>
                     <div class="building-item" data-building="submitter">
                         <div class="building-icon">📤</div>
                         <div class="building-info">
@@ -105,6 +96,44 @@
                         <span class="mode-name">Delete Mode</span>
                     </div>
                 </div>
+                
+                <div class="bottom-controls">
+                    <button class="recipe-btn" id="recipeBookBtn">📖 Recipe Book</button>
+                </div>
+                
+                <div class="resource-counter">
+                    <h3>Resources</h3>
+                    <div class="resource-item">
+                        <span class="resource-icon">⚡</span>
+                        <span class="resource-name">Iron:</span>
+                        <span class="resource-amount" id="ironCount">8</span>
+                    </div>
+                    <div class="resource-item">
+                        <span class="resource-icon">🟤</span>
+                        <span class="resource-name">Copper:</span>
+                        <span class="resource-amount" id="copperCount">0</span>
+                    </div>
+                    <div class="resource-item">
+                        <span class="resource-icon">🔩</span>
+                        <span class="resource-name">Iron Rods:</span>
+                        <span class="resource-amount" id="ironRodCount">0</span>
+                    </div>
+                    <div class="resource-item">
+                        <span class="resource-icon">🔧</span>
+                        <span class="resource-name">Copper Rods:</span>
+                        <span class="resource-amount" id="copperRodCount">0</span>
+                    </div>
+                    <div class="resource-item">
+                        <span class="resource-icon">🔥</span>
+                        <span class="resource-name">Steel:</span>
+                        <span class="resource-amount" id="steelCount">0</span>
+                    </div>
+                    <div class="resource-item">
+                        <span class="resource-icon">⚙️</span>
+                        <span class="resource-name">Gears:</span>
+                        <span class="resource-amount" id="gearCount">0</span>
+                    </div>
+                </div>
             </div>
         </div>
         
@@ -117,6 +146,27 @@
         </div>
         
         <canvas id="gameCanvas" width="800" height="600"></canvas>
+    </div>
+    
+    <!-- Recipe Book Modal -->
+    <div class="modal-overlay" id="recipeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📖 Recipe Book</h2>
+                <button class="modal-close" id="closeRecipeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="recipe-categories">
+                    <button class="category-btn active" data-category="all">All Items</button>
+                    <button class="category-btn" data-category="raw">Raw Materials</button>
+                    <button class="category-btn" data-category="processed">Processed</button>
+                    <button class="category-btn" data-category="advanced">Advanced</button>
+                </div>
+                <div class="recipe-list" id="recipeList">
+                    <!-- Recipes will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
     </div>
     
     <script src="script.js"></script>

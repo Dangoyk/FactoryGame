@@ -19,8 +19,13 @@ class FactoryGame {
             iron: 8,
             copper: 0,
             ironRod: 0,
-            copperRod: 0
+            copperRod: 0,
+            steel: 0,
+            gear: 0
         };
+        
+        // Discovery system
+        this.discoveredItems = new Set(['iron']); // Start with iron discovered
         
         // Building system
         this.selectedBuilding = null;
@@ -80,6 +85,26 @@ class FactoryGame {
                 name: 'Storage Container',
                 description: 'Stores up to 10 items. Can input and output from all directions.'
             },
+            furnace: { 
+                cost: 5, 
+                icon: '🔥', 
+                color: '#FF4500',
+                inputs: ['left'],
+                outputs: ['right'],
+                productionRate: 0.3, // steel per second
+                name: 'Furnace',
+                description: 'Smelts iron into steel. Requires iron input and produces steel output.'
+            },
+            assembler: { 
+                cost: 8, 
+                icon: '🔧', 
+                color: '#8B008B',
+                inputs: ['left', 'up'],
+                outputs: ['right'],
+                productionRate: 0.2, // gears per second
+                name: 'Assembler',
+                description: 'Assembles iron rods and copper rods into gears. Requires both inputs.'
+            },
             submitter: { 
                 cost: 2, 
                 icon: '📤', 
@@ -105,6 +130,64 @@ class FactoryGame {
         // UI elements
         this.tooltip = null;
         this.buildingDetails = null;
+        
+        // Recipe system
+        this.recipes = {
+            iron: {
+                icon: '⚡',
+                name: 'Iron',
+                description: 'Basic metal extracted from the ground',
+                category: 'raw',
+                makes: ['ironRod', 'steel'],
+                uses: ['ironMiner'],
+                ingredients: []
+            },
+            copper: {
+                icon: '🟤',
+                name: 'Copper',
+                description: 'Conductive metal extracted from the ground',
+                category: 'raw',
+                makes: ['copperRod'],
+                uses: ['copperMiner'],
+                ingredients: []
+            },
+            ironRod: {
+                icon: '🔩',
+                name: 'Iron Rod',
+                description: 'Processed iron in rod form',
+                category: 'processed',
+                makes: ['gear'],
+                uses: ['roller'],
+                ingredients: ['iron']
+            },
+            copperRod: {
+                icon: '🔧',
+                name: 'Copper Rod',
+                description: 'Processed copper in rod form',
+                category: 'processed',
+                makes: ['gear'],
+                uses: ['roller'],
+                ingredients: ['copper']
+            },
+            steel: {
+                icon: '🔥',
+                name: 'Steel',
+                description: 'Refined iron alloy',
+                category: 'processed',
+                makes: [],
+                uses: ['furnace'],
+                ingredients: ['iron']
+            },
+            gear: {
+                icon: '⚙️',
+                name: 'Gear',
+                description: 'Mechanical component made from rods',
+                category: 'advanced',
+                makes: [],
+                uses: ['assembler'],
+                ingredients: ['ironRod', 'copperRod']
+            }
+        };
         
         this.init();
     }
@@ -171,6 +254,23 @@ class FactoryGame {
         // Return to spawn button
         document.getElementById('returnToSpawn').addEventListener('click', () => {
             this.returnToSpawn();
+        });
+        
+        // Recipe book button
+        document.getElementById('recipeBookBtn').addEventListener('click', () => {
+            this.openRecipeBook();
+        });
+        
+        // Recipe book modal
+        document.getElementById('closeRecipeModal').addEventListener('click', () => {
+            this.closeRecipeBook();
+        });
+        
+        // Recipe category buttons
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                this.filterRecipes(e.target.dataset.category);
+            });
         });
         
         // Keyboard controls
@@ -600,6 +700,8 @@ class FactoryGame {
         document.getElementById('copperCount').textContent = this.resources.copper;
         document.getElementById('ironRodCount').textContent = this.resources.ironRod;
         document.getElementById('copperRodCount').textContent = this.resources.copperRod;
+        document.getElementById('steelCount').textContent = this.resources.steel;
+        document.getElementById('gearCount').textContent = this.resources.gear;
         this.updateBuildingAvailability();
     }
     
@@ -734,6 +836,12 @@ class FactoryGame {
                 break;
             case 'roller':
                 this.updateRoller(building, buildingType, deltaTime);
+                break;
+            case 'furnace':
+                this.updateFurnace(building, buildingType, deltaTime);
+                break;
+            case 'assembler':
+                this.updateAssembler(building, buildingType, deltaTime);
                 break;
             case 'storage':
                 this.updateStorageBuilding(building, buildingType, deltaTime);
@@ -908,6 +1016,154 @@ class FactoryGame {
         return false;
     }
     
+    updateFurnace(building, buildingType, deltaTime) {
+        // Process iron into steel
+        const key = `${building.x},${building.y}`;
+        const item = this.items.get(key);
+        
+        if (item && item.type === 'iron' && !building.processing) {
+            building.processing = true;
+            building.processingTime = 0;
+        }
+        
+        if (building.processing) {
+            building.processingTime += deltaTime;
+            
+            if (building.processingTime >= 1 / buildingType.productionRate) {
+                // Get rotated output direction
+                const rotatedOutputs = this.rotateDirections(buildingType.outputs, building.rotation);
+                const outputPos = this.getOutputPosition(building, rotatedOutputs[0]);
+                
+                if (outputPos && !this.items.has(`${outputPos.x},${outputPos.y}`) && 
+                    !this.isStorageFull(outputPos.x, outputPos.y)) {
+                    // Create steel item
+                    this.items.set(`${outputPos.x},${outputPos.y}`, {
+                        type: 'steel',
+                        x: outputPos.x,
+                        y: outputPos.y,
+                        progress: 0
+                    });
+                    
+                    // Remove input item
+                    this.items.delete(key);
+                    
+                    // Discover steel
+                    this.discoverItem('steel');
+                }
+                
+                building.processing = false;
+                building.processingTime = 0;
+            }
+        }
+    }
+    
+    updateAssembler(building, buildingType, deltaTime) {
+        // Process iron rods and copper rods into gears
+        const key = `${building.x},${building.y}`;
+        const item = this.items.get(key);
+        
+        // Check if we have both required items
+        const hasIronRod = item && item.type === 'ironRod';
+        const hasCopperRod = this.checkInputItems(building, 'copperRod');
+        
+        if (hasIronRod && hasCopperRod && !building.processing) {
+            building.processing = true;
+            building.processingTime = 0;
+        }
+        
+        if (building.processing) {
+            building.processingTime += deltaTime;
+            
+            if (building.processingTime >= 1 / buildingType.productionRate) {
+                // Get rotated output direction
+                const rotatedOutputs = this.rotateDirections(buildingType.outputs, building.rotation);
+                const outputPos = this.getOutputPosition(building, rotatedOutputs[0]);
+                
+                if (outputPos && !this.items.has(`${outputPos.x},${outputPos.y}`) && 
+                    !this.isStorageFull(outputPos.x, outputPos.y)) {
+                    // Create gear item
+                    this.items.set(`${outputPos.x},${outputPos.y}`, {
+                        type: 'gear',
+                        x: outputPos.x,
+                        y: outputPos.y,
+                        progress: 0
+                    });
+                    
+                    // Remove input items
+                    this.items.delete(key);
+                    this.removeInputItem(building, 'copperRod');
+                    
+                    // Discover gear
+                    this.discoverItem('gear');
+                }
+                
+                building.processing = false;
+                building.processingTime = 0;
+            }
+        }
+    }
+    
+    checkInputItems(building, itemType) {
+        // Check if building has the required input item
+        const rotatedInputs = this.rotateDirections(this.buildingTypes[building.type].inputs, building.rotation);
+        for (const direction of rotatedInputs) {
+            const inputPos = this.getInputPosition(building, direction);
+            if (inputPos) {
+                const inputKey = `${inputPos.x},${inputPos.y}`;
+                const inputItem = this.items.get(inputKey);
+                if (inputItem && inputItem.type === itemType) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+    removeInputItem(building, itemType) {
+        // Remove the first matching input item
+        const rotatedInputs = this.rotateDirections(this.buildingTypes[building.type].inputs, building.rotation);
+        for (const direction of rotatedInputs) {
+            const inputPos = this.getInputPosition(building, direction);
+            if (inputPos) {
+                const inputKey = `${inputPos.x},${inputPos.y}`;
+                const inputItem = this.items.get(inputKey);
+                if (inputItem && inputItem.type === itemType) {
+                    this.items.delete(inputKey);
+                    return;
+                }
+            }
+        }
+    }
+    
+    getInputPosition(building, direction) {
+        let newX = building.x;
+        let newY = building.y;
+        
+        switch (direction) {
+            case 'up':
+                newY -= 1;
+                break;
+            case 'down':
+                newY += 1;
+                break;
+            case 'left':
+                newX -= 1;
+                break;
+            case 'right':
+                newX += 1;
+                break;
+        }
+        
+        return { x: newX, y: newY };
+    }
+    
+    discoverItem(itemType) {
+        if (!this.discoveredItems.has(itemType)) {
+            this.discoveredItems.add(itemType);
+            console.log(`Discovered: ${this.recipes[itemType].name}!`);
+        }
+    }
+    
     updateSubmitter(building, buildingType, deltaTime) {
         // Collect items from inputs
         const key = `${building.x},${building.y}`;
@@ -976,6 +1232,12 @@ class FactoryGame {
                 break;
             case 'copperRod':
                 color = '#CD7F32'; // Bronze
+                break;
+            case 'steel':
+                color = '#708090'; // Steel gray
+                break;
+            case 'gear':
+                color = '#2F4F4F'; // Dark slate gray
                 break;
         }
         
@@ -1114,6 +1376,77 @@ class FactoryGame {
             this.buildingDetails = null;
             document.removeEventListener('click', this.closeBuildingDetails);
         }
+    }
+    
+    // Recipe book system
+    openRecipeBook() {
+        const modal = document.getElementById('recipeModal');
+        modal.style.display = 'flex';
+        this.populateRecipeList('all');
+    }
+    
+    closeRecipeBook() {
+        const modal = document.getElementById('recipeModal');
+        modal.style.display = 'none';
+    }
+    
+    filterRecipes(category) {
+        // Update active category button
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-category="${category}"]`).classList.add('active');
+        
+        this.populateRecipeList(category);
+    }
+    
+    populateRecipeList(category) {
+        const recipeList = document.getElementById('recipeList');
+        recipeList.innerHTML = '';
+        
+        Object.entries(this.recipes).forEach(([itemType, recipe]) => {
+            if (category !== 'all' && recipe.category !== category) {
+                return;
+            }
+            
+            const isDiscovered = this.discoveredItems.has(itemType);
+            const recipeItem = document.createElement('div');
+            recipeItem.className = `recipe-item ${isDiscovered ? 'discovered' : 'undiscovered'}`;
+            
+            recipeItem.innerHTML = `
+                <div class="recipe-header">
+                    <span class="recipe-icon">${recipe.icon}</span>
+                    <span class="recipe-name">${recipe.name}</span>
+                </div>
+                <div class="recipe-description">${recipe.description}</div>
+                ${recipe.ingredients.length > 0 ? `
+                    <div class="recipe-makes">
+                        <h4>Made from:</h4>
+                        <div class="recipe-ingredients">
+                            ${recipe.ingredients.map(ing => `<span class="ingredient">${this.recipes[ing].icon} ${this.recipes[ing].name}</span>`).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                ${recipe.makes.length > 0 ? `
+                    <div class="recipe-uses">
+                        <h4>Used to make:</h4>
+                        <div class="recipe-ingredients">
+                            ${recipe.makes.map(make => `<span class="ingredient">${this.recipes[make].icon} ${this.recipes[make].name}</span>`).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                ${recipe.uses.length > 0 ? `
+                    <div class="recipe-uses">
+                        <h4>Made by:</h4>
+                        <div class="recipe-ingredients">
+                            ${recipe.uses.map(use => `<span class="ingredient">${this.buildingTypes[use].icon} ${this.buildingTypes[use].name}</span>`).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+            
+            recipeList.appendChild(recipeItem);
+        });
     }
 }
 
