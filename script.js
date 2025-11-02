@@ -341,6 +341,7 @@ class FactoryGame {
         this.storage = new Map(); // For storage containers
         this.mousePos = { x: 0, y: 0 };
         this.animationTime = 0;
+        this.saveTimer = null; // Timer for debounced saves
         
         // Camera system
         this.camera = { x: 0, y: 0 };
@@ -475,6 +476,9 @@ class FactoryGame {
     }
     
     init() {
+        // Load saved game state first
+        this.loadGame();
+        
         this.setupEventListeners();
         this.setupDebugEventListeners();
         this.resizeCanvas();
@@ -490,6 +494,11 @@ class FactoryGame {
         if (!this.tutorialCompleted) {
             this.showTutorial();
         }
+        
+        // Set up auto-save every 30 seconds
+        setInterval(() => {
+            this.saveGame();
+        }, 30000); // Auto-save every 30 seconds
         
         // Start game loop
         this.gameLoop();
@@ -1287,6 +1296,9 @@ class FactoryGame {
             this.updateResourceDisplay();
             this.updateBuildingAvailability();
             this.draw();
+            
+            // Save game state
+            this.saveGame();
         }
     }
     
@@ -1792,6 +1804,9 @@ class FactoryGame {
             if (recipeBookModal && recipeBookModal.style.display === 'flex') {
                 this.populateRecipeBook();
             }
+            
+            // Save game state
+            this.saveGame();
         }
     }
     
@@ -1979,6 +1994,9 @@ class FactoryGame {
         }
         
         console.log(`Research Level ${nextLevel} unlocked!`);
+        
+        // Save game state
+        this.saveGame();
     }
     
     updateSubmitter(building, buildingType, deltaTime) {
@@ -1992,6 +2010,9 @@ class FactoryGame {
             this.items.delete(key);
             this.playSound('collect');
             this.updateResourceDisplay();
+            
+            // Save game state will be handled by auto-save (every 30 seconds)
+            // Immediate saves are done for major actions (place/delete buildings, research, etc.)
         }
     }
     
@@ -3002,7 +3023,109 @@ class FactoryGame {
             // Show tutorial again
             this.showTutorial();
             
+            // Clear saved game
+            localStorage.removeItem('factoryGameSave');
+            
             console.log('Game reset successfully!');
+        }
+    }
+    
+    // Save game state to localStorage
+    saveGame() {
+        try {
+            // Clear any pending debounced save
+            if (this.saveTimer) {
+                clearTimeout(this.saveTimer);
+                this.saveTimer = null;
+            }
+            
+            // Convert Sets and Maps to JSON-serializable formats
+            const saveData = {
+                resources: this.resources,
+                powerGrid: this.powerGrid,
+                discoveredItems: Array.from(this.discoveredItems), // Convert Set to Array
+                researchLevel: this.researchLevel,
+                researchProgress: this.researchProgress,
+                buildings: Array.from(this.buildings.entries()).map(([key, building]) => [key, building]), // Convert Map to Array
+                storage: Array.from(this.storage.entries()).map(([key, storage]) => [key, storage]), // Convert Map to Array
+                camera: this.camera,
+                spawnPoint: this.spawnPoint,
+                tutorialCompleted: this.tutorialCompleted,
+                version: '1.0' // Version for future compatibility
+            };
+            
+            localStorage.setItem('factoryGameSave', JSON.stringify(saveData));
+            // Only log saves for important actions (not debounced saves)
+            // console.log('Game saved successfully!');
+        } catch (error) {
+            console.error('Error saving game:', error);
+        }
+    }
+    
+    // Load game state from localStorage
+    loadGame() {
+        try {
+            const saveDataStr = localStorage.getItem('factoryGameSave');
+            if (!saveDataStr) {
+                console.log('No saved game found. Starting fresh game.');
+                return false; // No save data, start fresh
+            }
+            
+            const saveData = JSON.parse(saveDataStr);
+            
+            // Restore resources
+            if (saveData.resources) {
+                this.resources = { ...this.resources, ...saveData.resources };
+            }
+            
+            // Restore power grid
+            if (saveData.powerGrid) {
+                this.powerGrid = { ...this.powerGrid, ...saveData.powerGrid };
+            }
+            
+            // Restore discovered items (convert Array back to Set)
+            if (saveData.discoveredItems && Array.isArray(saveData.discoveredItems)) {
+                this.discoveredItems = new Set(saveData.discoveredItems);
+            }
+            
+            // Restore research
+            if (saveData.researchLevel !== undefined) {
+                this.researchLevel = saveData.researchLevel;
+            }
+            if (saveData.researchProgress !== undefined) {
+                this.researchProgress = saveData.researchProgress;
+            }
+            
+            // Restore buildings (convert Array back to Map)
+            if (saveData.buildings && Array.isArray(saveData.buildings)) {
+                this.buildings = new Map(saveData.buildings);
+            }
+            
+            // Restore storage (convert Array back to Map)
+            if (saveData.storage && Array.isArray(saveData.storage)) {
+                this.storage = new Map(saveData.storage);
+            }
+            
+            // Restore camera position
+            if (saveData.camera) {
+                this.camera = { ...this.camera, ...saveData.camera };
+            }
+            
+            // Restore spawn point
+            if (saveData.spawnPoint) {
+                this.spawnPoint = { ...this.spawnPoint, ...saveData.spawnPoint };
+            }
+            
+            // Restore tutorial status
+            if (saveData.tutorialCompleted !== undefined) {
+                this.tutorialCompleted = saveData.tutorialCompleted;
+            }
+            
+            console.log('Game loaded successfully!');
+            return true;
+        } catch (error) {
+            console.error('Error loading game:', error);
+            return false;
         }
     }
     
@@ -3255,6 +3378,9 @@ class FactoryGame {
         this.updateResourceDisplay();
         this.updateBuildingSelection();
         this.draw();
+        
+        // Save game state
+        this.saveGame();
     }
     
     completeTutorial() {
@@ -3270,6 +3396,9 @@ class FactoryGame {
         );
         
         this.draw();
+        
+        // Save game state
+        this.saveGame();
     }
     
     showNotification(title, message, buttonText = 'OK') {
